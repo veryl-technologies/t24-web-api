@@ -46,7 +46,7 @@ class T24LoginPage(Page):
     def enter_T24_credentials(self, username, password):
         self._type_username (username)
         self._type_password(password)
-        return self._click_login();
+        return self._click_login()
 
 
 class T24HomePage(Page):
@@ -65,17 +65,12 @@ class T24HomePage(Page):
         "command line": "css=input[name='commandValue']",
     }
 
-    # Use robot_alias and the "__name__" token to customize
-    # where to insert the optional page object name
-    # when calling this keyword. Without the "__name__"
-    # token this method would map to either "Type In Search Box",
-    # or "Type In Search Box Pubmed". Using "__name__" we can call
-    # "Type in Pubmed Search Box  foo".
+    # Enter a T24 API command
     @robot_alias("enter_t24_command")
     def enter_t24_command(self, text):
-        self.select_frame(selectors["banner frame"])
-        self.wait_until_page_contains_element(selectors["command line"])
-        self.input_text(selectors["command line"], text+"\n")
+        self.select_frame(self.selectors["banner frame"])
+        self.wait_until_page_contains_element(self.selectors["command line"])
+        self.input_text(self.selectors["command line"], text+"\n")
 
         # We always return something from a page object, 
         # even if it's the same page object instance we are

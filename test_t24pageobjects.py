@@ -14,7 +14,7 @@ class T24LoginPageTestCase(unittest.TestCase):
 
     def test_login(self):
         page = self.loginpage.enter_T24_credentials("INPUTT","123456")
-        page.enter_t24_command(page,"AAA")
+        page.enter_t24_command("CUSTOMER I F3")
 
     def tearDown(self):
         self.loginpage.close()
