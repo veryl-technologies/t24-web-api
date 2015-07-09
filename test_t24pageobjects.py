@@ -15,8 +15,16 @@ class T24LoginPageTestCase(unittest.TestCase):
 
     def test_enquiry(self):
         homePage = self.loginpage.enter_T24_credentials("INPUTT","123456")
-        homePage.enter_t24_command("ENQ %CUSTOMER")
-        time.sleep(3)
+        enqResultPage = homePage.open_t24_enquiry("%CUSTOMER", ["SECTOR NE 1000", "INDUSTRY GT 500"])
+        customer_id = enqResultPage.get_first_id_of_enquiry_result()
+        if not customer_id:
+            print "No customer found"
+            return
+
+        print "ID of first found customer is " + customer_id
+        enqResultPage.close_window()
+        homePage._enter_t24_command("CUSTOMER S " + customer_id)
+        time.sleep(5)
 
     def tearDown(self):
         self.loginpage.close()

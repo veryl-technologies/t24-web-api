@@ -64,9 +64,9 @@ class T24HomePage(Page):
         "command line": "css=input[name='commandValue']",
     }
 
-    # Enter a T24 command
-    @robot_alias("enter_t24_command")
-    def enter_t24_command(self, text):
+    # Enter a T24 command and simulate an Enter
+    def _enter_t24_command(self, text):
+        self.select_window()
         self.select_frame(self.selectors["banner frame"])
         self.wait_until_page_contains_element(self.selectors["command line"])
         self.input_text(self.selectors["command line"], text+"\n")
@@ -77,16 +77,21 @@ class T24HomePage(Page):
 
     # Enter a T24 enquiry API command
     @robot_alias("enter_t24_enquiry")
-    def open_t24_enquiry(self, text):
-        self.enter_t24_command(text)
+    def open_t24_enquiry(self, enquiry_name, enquiry_filters=[]):
 
-        return T24EnquiryStartPage()
+        # prepare filter text
+        if not enquiry_filters:
+            enquiry_filters = ["@ID GT 0"]  # This is a workaround only
+        filter_text = ' '.join([str(f) for f in enquiry_filters])
+
+        self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
+        return T24EnquiryResultPage()
 
 class T24EnquiryStartPage(Page):
     """ Models the T24 Enquiry Start Page"""
 
     # Allows us to call by proper name
-    name = "T24Enquiry"
+    name = "T24EnquiryFilters"
 
     # Probably not necessary
     uri = "/BrowserWeb/servlet/BrowserServlet#1"
@@ -99,8 +104,8 @@ class T24EnquiryStartPage(Page):
     }
 
     # Runs a T24 enquiry
-    @robot_alias("run_enquiry")
-    def run_enquiry(self, fieldName, fieldValue):
+    @robot_alias("run_enquiry_no_filters")
+    def run_enquiry_no_filters(self):
         self.wait_until_page_contains_element(self.selectors["clear selection link"])
         self.wait_until_page_contains_element(self.selectors["find button"])
 
@@ -110,5 +115,35 @@ class T24EnquiryStartPage(Page):
         # We always return something from a page object,
         # even if it's the same page object instance we are
         # currently on.
-        return self
+        return T24EnquiryResultPage()
 
+class T24EnquiryResultPage(Page):
+    """ Models the T24 Enquiry Result Page"""
+
+    # Allows us to call by proper name
+    name = "T24EnquiryResults"
+
+    # Probably not necessary
+    uri = "/BrowserWeb/servlet/BrowserServlet#1"
+
+    # Inheritable dictionary mapping human-readable names to Selenium2Library locators.
+    # You can then pass in the keys to Selenium2Library actions instead of the locator strings.
+    selectors = {
+        "refresh button": "xpath=.//img[@alt='Refresh']",
+        "first text column in grid": "css=#r1 > td:nth-child(2)",
+    }
+
+    # Gets the first ID of an enquiry result
+    @robot_alias("get_first_id_of_enquiry_result")
+    def get_first_id_of_enquiry_result(self):
+        self.select_window("new")
+        self.wait_until_page_contains_element(self.selectors["refresh button"])
+
+        #if self._page_contains("No records matched the selection criteria"):
+        #    return "" # too slow
+
+        #if not self.wait_until_page_contains_element(self.selectors["first text column in grid"], 5):
+        #   return ""  # doesn't work
+
+        res = self._get_text(self.selectors["first text column in grid"])  # TODO error handling
+        return res
