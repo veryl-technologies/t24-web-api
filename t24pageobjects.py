@@ -1,4 +1,5 @@
 from robotpageobjects import Page, robot_alias
+import time
 from robot.utils import asserts
 
 class T24LoginPage(Page):
@@ -64,6 +65,7 @@ class T24HomePage(Page):
 
     @robot_alias("sign_off")
     def sign_off(self):
+        self.select_window()
         self.select_frame(self.selectors["banner frame"])
         self.click_link("Sign Off")
         return T24LoginPage()
@@ -73,14 +75,14 @@ class T24HomePage(Page):
         self.select_window()
         self.select_frame(self.selectors["banner frame"])
         self.wait_until_page_contains_element(self.selectors["command line"])
-        self.input_text(self.selectors["command line"], text+"\n")
+        self.input_text(self.selectors["command line"], text + "\n")
 
         # We always return something from a page object,
         # even if it's the same page object instance we are currently on.
         return self
 
     # Enter a T24 enquiry API command
-    @robot_alias("enter_t24_enquiry")
+    @robot_alias("run_t24_enquiry")
     def open_t24_enquiry(self, enquiry_name, enquiry_filters=[]):
 
         # prepare the filter text
@@ -89,7 +91,33 @@ class T24HomePage(Page):
         filter_text = ' '.join([str(f) for f in enquiry_filters])
 
         self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
+        self.select_window("new")
         return T24EnquiryResultPage()
+
+    # Opens a T24 input page
+    @robot_alias("open_input_page_new_record")
+    def open_input_page_new_record(self, version):
+        self._enter_t24_command(version + " I F3")
+        self.select_window("new")
+        return T24RecordInputPage()
+
+    @robot_alias("open_edit_page")
+    def open_edit_page(self, version, record_id):
+        self._enter_t24_command(version + " I " + record_id)
+        self.select_window("new")
+        return T24RecordInputPage()
+
+    @robot_alias("open_edit_page")
+    def open_edit_page(self, version, record_id):
+        self._enter_t24_command(version + " I " + record_id)
+        self.select_window("new")
+        return T24RecordInputPage()
+
+    @robot_alias("open_authorize_page")
+    def open_authorize_page(self, version, record_id):
+        self._enter_t24_command(version + " A " + record_id)
+        self.select_window("new")
+        return T24RecordInputPage()
 
 class T24EnquiryStartPage(Page):
     """ Models the T24 Enquiry Start Page"""
@@ -137,7 +165,8 @@ class T24EnquiryResultPage(Page):
     # Gets the first ID of an enquiry result
     @robot_alias("get_first_id_of_enquiry_result")
     def get_first_id_of_enquiry_result(self):
-        self.select_window("new")
+        # time.sleep(1.5)
+        self.select_window("self")
         self.wait_until_page_contains_element(self.selectors["refresh button"])
 
         #if self._page_contains("No records matched the selection criteria"):
@@ -168,7 +197,7 @@ class T24RecordInputPage(Page):
     @robot_alias("get_first_id_of_enquiry_result")
     def get_id_from_completed_transaction(self):
         # self.select_window("new")
-        self.wait_until_page_contains("Txn Complete")
+        self.wait_until_page_contains("Txn Complete")  # Put a timeout or wait for error, too
         confirmationMsg = self._get_text(self.selectors["transaction complete"])
         transactionId = self._get_id_from_transaction_confirmation_text(confirmationMsg)
         return transactionId
@@ -176,14 +205,17 @@ class T24RecordInputPage(Page):
     def _get_id_from_transaction_confirmation_text(self, confirmTransactionText):
         return confirmTransactionText.replace('Txn Complete:', '').strip().split(' ', 1)[0]
 
-    #  Set a value in a text field, by specifying the underlying T24 field name
+    # Set a value in a text field, by specifying the underlying T24 field name
     def input_text_to_T24_field(self, fieldName, fieldText):
-        self.input_text("css=input[name='fieldName:" + fieldName + "}']", fieldText)
+        self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
+        return self
 
-    #   Clicks the Commit Button When Dealing with T24 Transactions
+    # Clicks the Commit Button When Dealing with T24 Transactions
     def click_commit_button(self):
         self.click_element("css=img[alt=\"Commit the deal\"]")
+        return self
 
-    #   Clicks the Authorize Button When Dealing with T24 Transactions
+    # Clicks the Authorize Button When Dealing with T24 Transactions
     def click_authorize_button(self):
         self.click_element("css=img[alt=\"Authorises a deal\"]")
+        return self
