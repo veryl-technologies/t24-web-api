@@ -1,4 +1,6 @@
 from robotpageobjects import Page, robot_alias
+from T24OperationType import T24OperationType
+from T24ExecutionContext import T24ExecutionContext
 import time
 from robot.utils import asserts
 
@@ -43,6 +45,7 @@ class T24LoginPage(Page):
 
     @robot_alias("enter_T24_credentials")
     def enter_T24_credentials(self, username, password):
+        T24ExecutionContext.Instance().add_operation(T24OperationType.Login)
         self._type_username(username)
         self._type_password(password)
         return self._click_login()
@@ -65,17 +68,25 @@ class T24HomePage(Page):
 
     @robot_alias("sign_off")
     def sign_off(self):
+        T24ExecutionContext.Instance().add_operation(T24OperationType.SignOff)
         self.select_window()
         self.select_frame(self.selectors["banner frame"])
         self.click_link("Sign Off")
-        return T24LoginPage()
+        T24ExecutionContext.Instance().CurrentPage = T24LoginPage()
+        return T24ExecutionContext.Instance().CurrentPage
 
     # Enter a T24 command and simulate an Enter
     def _enter_t24_command(self, text):
+
+        print "Running command: '" + text + "' ..."
+
         self.select_window()
         self.select_frame(self.selectors["banner frame"])
+
         self.wait_until_page_contains_element(self.selectors["command line"])
         self.input_text(self.selectors["command line"], text + "\n")
+
+        self.select_window("new")
 
         # We always return something from a page object,
         # even if it's the same page object instance we are currently on.
@@ -84,7 +95,7 @@ class T24HomePage(Page):
     # Enter a T24 enquiry API command
     @robot_alias("run_t24_enquiry")
     def open_t24_enquiry(self, enquiry_name, enquiry_filters=[]):
-        self.select_window()
+        T24ExecutionContext.Instance().add_operation(T24OperationType.Enquiry)
 
         # prepare the filter text
         if not enquiry_filters:
@@ -92,37 +103,34 @@ class T24HomePage(Page):
         filter_text = ' '.join([str(f) for f in enquiry_filters])
 
         self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
-        self.select_window("new")
-        return T24EnquiryResultPage()
+
+        T24ExecutionContext.Instance().CurrentPage = T24EnquiryResultPage()
+        return T24ExecutionContext.Instance().CurrentPage
 
     # Opens a T24 input page
     @robot_alias("open_input_page_new_record")
     def open_input_page_new_record(self, version):
-        self.select_window()
+        T24ExecutionContext.Instance().add_operation(T24OperationType.StartInputNewRecord)
         self._enter_t24_command(version + " I F3")
-        self.select_window("new")
-        return T24RecordInputPage()
+
+        T24ExecutionContext.Instance().CurrentPage = T24RecordInputPage()
+        return T24ExecutionContext.Instance().CurrentPage
 
     @robot_alias("open_edit_page")
     def open_edit_page(self, version, record_id):
-        self.select_window()
+        T24ExecutionContext.Instance().add_operation(T24OperationType.StertEditExitingRecord)
         self._enter_t24_command(version + " I " + record_id)
-        self.select_window("new")
-        return T24RecordInputPage()
 
-    @robot_alias("open_edit_page")
-    def open_edit_page(self, version, record_id):
-        self.select_window()
-        self._enter_t24_command(version + " I " + record_id)
-        self.select_window("new")
-        return T24RecordInputPage()
+        T24ExecutionContext.Instance().CurrentPage = T24RecordInputPage()
+        return T24ExecutionContext.Instance().CurrentPage
 
     @robot_alias("open_authorize_page")
     def open_authorize_page(self, version, record_id):
-        self.select_window()
+        T24ExecutionContext.Instance().add_operation(T24OperationType.StartAuthorizingRecord)
         self._enter_t24_command(version + " A " + record_id)
-        self.select_window("new")
-        return T24RecordInputPage()
+
+        T24ExecutionContext.Instance().CurrentPage = T24RecordInputPage()
+        return T24ExecutionContext.Instance().CurrentPage
 
 class T24EnquiryStartPage(Page):
     """ Models the T24 Enquiry Start Page"""
@@ -149,7 +157,8 @@ class T24EnquiryStartPage(Page):
         self.click_element(self.selectors["clear selection link"])
         self.click_element(self.selectors["find button"])
 
-        return T24EnquiryResultPage()
+        T24ExecutionContext.Instance().CurrentPage = T24EnquiryResultPage()
+        return T24ExecutionContext.Instance().CurrentPage
 
 class T24EnquiryResultPage(Page):
     """ Models the T24 Enquiry Result Page"""
@@ -201,7 +210,6 @@ class T24RecordInputPage(Page):
     # Checks whether the transaction is completed and if yes, extracts the referenced ID
     @robot_alias("get_first_id_of_enquiry_result")
     def get_id_from_completed_transaction(self):
-        # self.select_window("new")
         self.wait_until_page_contains("Txn Complete")  # Put a timeout or wait for error, too
         confirmationMsg = self._get_text(self.selectors["transaction complete"])
         transactionId = self._get_id_from_transaction_confirmation_text(confirmationMsg)
