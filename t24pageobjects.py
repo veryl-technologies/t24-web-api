@@ -84,6 +84,7 @@ class T24HomePage(Page):
     # Enter a T24 enquiry API command
     @robot_alias("run_t24_enquiry")
     def open_t24_enquiry(self, enquiry_name, enquiry_filters=[]):
+        self.select_window()
 
         # prepare the filter text
         if not enquiry_filters:
@@ -97,24 +98,28 @@ class T24HomePage(Page):
     # Opens a T24 input page
     @robot_alias("open_input_page_new_record")
     def open_input_page_new_record(self, version):
+        self.select_window()
         self._enter_t24_command(version + " I F3")
         self.select_window("new")
         return T24RecordInputPage()
 
     @robot_alias("open_edit_page")
     def open_edit_page(self, version, record_id):
+        self.select_window()
         self._enter_t24_command(version + " I " + record_id)
         self.select_window("new")
         return T24RecordInputPage()
 
     @robot_alias("open_edit_page")
     def open_edit_page(self, version, record_id):
+        self.select_window()
         self._enter_t24_command(version + " I " + record_id)
         self.select_window("new")
         return T24RecordInputPage()
 
     @robot_alias("open_authorize_page")
     def open_authorize_page(self, version, record_id):
+        self.select_window()
         self._enter_t24_command(version + " A " + record_id)
         self.select_window("new")
         return T24RecordInputPage()

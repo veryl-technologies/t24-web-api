@@ -13,18 +13,16 @@ class T24LoginPageTestCase(unittest.TestCase):
         self.loginpage = T24LoginPage()
         self.loginpage.open()
 
-    def test_enquiry(self):
+    def test_full_scenario(self):
         homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
+
+        # get an existing customer ID
         enqResultPage = homePage.open_t24_enquiry("%CUSTOMER", ["SECTOR NE 1000", "INDUSTRY GT 500"])
         customer_id = enqResultPage.get_first_id_of_enquiry_result()
-        if not customer_id:
-            print "No customer found"
-            return
-
         print "ID of first found customer is " + customer_id
         enqResultPage.close_window()
-        homePage.select_window("self")
 
+        # create an account
         inputPage = homePage.open_input_page_new_record("ACCOUNT")
         inputPage.input_text_to_T24_field("CUSTOMER", customer_id)
         inputPage.input_text_to_T24_field("CATEGORY", "1002")
@@ -33,10 +31,9 @@ class T24LoginPageTestCase(unittest.TestCase):
         accountId = inputPage.get_id_from_completed_transaction()
         inputPage.close_window()
 
-        homePage.select_window("self")
+        # authorize the account
         homePage.sign_off()
         self.loginpage.enter_T24_credentials("AUTHOR", "123456")
-
         authorPage = homePage.open_authorize_page("ACCOUNT", accountId)
         authorPage.click_authorize_button()
         authorizedAccountId = inputPage.get_id_from_completed_transaction()
@@ -45,7 +42,7 @@ class T24LoginPageTestCase(unittest.TestCase):
         homePage.sign_off()
 
         # homePage._enter_t24_command("CUSTOMER S " + accountId)
-        time.sleep(5)
+        time.sleep(1)
 
     def tearDown(self):
         self.loginpage.close()
