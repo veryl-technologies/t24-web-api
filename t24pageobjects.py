@@ -88,8 +88,7 @@ class T24HomePage(Page):
 
         self.select_window("new")
 
-        # We always return something from a page object,
-        # even if it's the same page object instance we are currently on.
+        # We always return something from a page object, even if it's the same page object instance we are currently on.
         return self
 
     # Enter a T24 enquiry API command
@@ -187,7 +186,6 @@ class T24EnquiryResultPage(Page):
     # Gets the first ID of an enquiry result
     @robot_alias("get_first_id_of_enquiry_result")
     def get_first_id_of_enquiry_result(self):
-        # time.sleep(1.5)
         self.select_window("self")
         self.wait_until_page_contains_element(self.selectors["refresh button"])
 
@@ -210,7 +208,8 @@ class T24RecordSeePage(Page):
     uri = "/BrowserWeb/servlet/BrowserServlet#1"
 
     # Gets a text value from the underlying T24 field name
-    def get_value_of_T24_field(self, fieldName):
+    @robot_alias("get_T24_field_value")
+    def get_T24_field_value(self, fieldName):
         fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
         return fieldValue
 
@@ -241,7 +240,8 @@ class T24RecordInputPage(Page):
         return confirmTransactionText.replace('Txn Complete:', '').strip().split(' ', 1)[0]
 
     # Set a value in a text field, by specifying the underlying T24 field name
-    def input_text_to_T24_field(self, fieldName, fieldText):
+    @robot_alias("set_T24_field_value")
+    def set_T24_field_value(self, fieldName, fieldText):
         self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
         return self
 
