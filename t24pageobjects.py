@@ -132,6 +132,14 @@ class T24HomePage(Page):
         T24ExecutionContext.Instance().CurrentPage = T24RecordInputPage()
         return T24ExecutionContext.Instance().CurrentPage
 
+    @robot_alias("open_see_page")
+    def open_see_page(self, version, record_id):
+        T24ExecutionContext.Instance().add_operation(T24OperationType.SeeRecord)
+        self._enter_t24_command(version + " S " + record_id)
+
+        T24ExecutionContext.Instance().CurrentPage = T24RecordSeePage()
+        return T24ExecutionContext.Instance().CurrentPage
+
 class T24EnquiryStartPage(Page):
     """ Models the T24 Enquiry Start Page"""
 
@@ -192,6 +200,20 @@ class T24EnquiryResultPage(Page):
         res = self._get_text(self.selectors["first text column in grid"])  # TODO error handling (throw better error)
         return res
 
+class T24RecordSeePage(Page):
+    """ Models the T24 Record See Page"""
+
+    # Allows us to call by proper name
+    name = "T24RecordSeePage"
+
+    # Probably not necessary
+    uri = "/BrowserWeb/servlet/BrowserServlet#1"
+
+    # Gets a text value from the underlying T24 field name
+    def get_value_of_T24_field(self, fieldName):
+        fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
+        return fieldValue
+
 class T24RecordInputPage(Page):
     """ Models the T24 Record Input Page"""
 
@@ -208,7 +230,7 @@ class T24RecordInputPage(Page):
     }
 
     # Checks whether the transaction is completed and if yes, extracts the referenced ID
-    @robot_alias("get_first_id_of_enquiry_result")
+    @robot_alias("get_id_from_completed_transaction")
     def get_id_from_completed_transaction(self):
         self.wait_until_page_contains("Txn Complete")  # Put a timeout or wait for error, too
         confirmationMsg = self._get_text(self.selectors["transaction complete"])
