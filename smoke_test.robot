@@ -8,7 +8,7 @@ Library           t24pageobjects.T24RecordSeePage
 Library           t24pageobjects.T24RecordInputPage
 
 *** Test Cases ***
-Scenario: Create a customer
+Scenario: See a sample customer
     Open T24Login
     Enter T24 Credentials    INPUTT    123456
     Open See Page    CUSTOMER    ABCL
