@@ -10,4 +10,6 @@ Library           t24pageobjects.T24RecordInputPage
 *** Test Cases ***
 Scenario: Create a customer
     Open T24Login
-    Enter T24 Credentials    INPUTT     123456
+    Enter T24 Credentials    INPUTT    123456
+    Open See Page    CUSTOMER    ABCL
+    Close
