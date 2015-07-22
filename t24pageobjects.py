@@ -4,7 +4,11 @@ from T24ExecutionContext import T24ExecutionContext
 import time
 from robot.utils import asserts
 
-class T24LoginPage(Page):
+class T24Page(Page):
+    ROBOT_LIBRARY_SCOPE = 'GLOBAL'
+    __version__ = '0.1'
+
+class T24LoginPage(T24Page):
     """ Models the T24 login page"""
 
     # Allows us to call by proper name
@@ -21,7 +25,7 @@ class T24LoginPage(Page):
         "login button": "css=#sign-in",
     }
 
-    # Use robot_alias and the "__name__" token to customize where to insert the optional page object name when calling this keyword. 
+    # Use robot_alias and the "__name__" token to customize where to insert the optional page object name.
     @robot_alias("type_in__name__username_box")
     def _type_username(self, txt):
         self.input_text("user input", txt)
@@ -29,7 +33,7 @@ class T24LoginPage(Page):
         # We always return something from a page object, even if it's the same page object instance we are currently on.
         return self
 
-    # Use robot_alias and the "__name__" token to customize where to insert the optional page object name when calling this keyword. 
+    # Use robot_alias and the "__name__" token to customize where to insert the optional page object name.
     @robot_alias("type_in__name__password_box")
     def _type_password(self, txt):
         self.input_text("password input", txt)
@@ -37,7 +41,7 @@ class T24LoginPage(Page):
         # We always return something from a page object, even if it's the same page object instance we are currently on.
         return self
 
-    # Use robot_alias and the "__name__" token to customize where to insert the optional page object name when calling this keyword. 
+    # Use robot_alias and the "__name__" token to customize where to insert the optional page object name.
     @robot_alias("clicks__name__login_button")
     def _click_login(self):
         self.click_element("login button")
@@ -50,7 +54,7 @@ class T24LoginPage(Page):
         self._type_password(password)
         return self._click_login()
 
-class T24HomePage(Page):
+class T24HomePage(T24Page):
     """ Models the T24 home page """
 
     # Allows us to call by proper name
@@ -139,7 +143,7 @@ class T24HomePage(Page):
         T24ExecutionContext.Instance().CurrentPage = T24RecordSeePage()
         return T24ExecutionContext.Instance().CurrentPage
 
-class T24EnquiryStartPage(Page):
+class T24EnquiryStartPage(T24Page):
     """ Models the T24 Enquiry Start Page"""
 
     # Allows us to call by proper name
@@ -167,7 +171,7 @@ class T24EnquiryStartPage(Page):
         T24ExecutionContext.Instance().CurrentPage = T24EnquiryResultPage()
         return T24ExecutionContext.Instance().CurrentPage
 
-class T24EnquiryResultPage(Page):
+class T24EnquiryResultPage(T24Page):
     """ Models the T24 Enquiry Result Page"""
 
     # Allows us to call by proper name
@@ -198,7 +202,7 @@ class T24EnquiryResultPage(Page):
         res = self._get_text(self.selectors["first text column in grid"])  # TODO error handling (throw better error)
         return res
 
-class T24RecordSeePage(Page):
+class T24RecordSeePage(T24Page):
     """ Models the T24 Record See Page"""
 
     # Allows us to call by proper name
@@ -213,7 +217,7 @@ class T24RecordSeePage(Page):
         fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
         return fieldValue
 
-class T24RecordInputPage(Page):
+class T24RecordInputPage(T24Page):
     """ Models the T24 Record Input Page"""
 
     # Allows us to call by proper name
