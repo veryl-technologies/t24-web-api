@@ -45,5 +45,8 @@ class T24ExecutionContext:
         print 'Executing operation: ' + operation + " ..."
         self.Operations.append(operation)
 
+    def set_current_page(self, page):
+        print 'Current page is ' + type(page) + "."
+        CurrentPage = page
 
 

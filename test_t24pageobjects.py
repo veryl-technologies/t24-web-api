@@ -18,7 +18,6 @@ class T24LoginPageTestCase(unittest.TestCase):
         seePage = self.homePage.open_see_page("CUSTOMER", "ABCL")
         print seePage.get_T24_field_value("MNEMONIC")
         print seePage.get_T24_field_value("SECTOR")
-        seePage.close_window()
         self.homePage.sign_off()
 
     def test_enq_ia(self):
@@ -26,7 +25,6 @@ class T24LoginPageTestCase(unittest.TestCase):
         enqResultPage = self.homePage.open_t24_enquiry("%CUSTOMER", ["SECTOR NE 1000", "INDUSTRY GT 500"])
         customer_id = enqResultPage.get_first_id_of_enquiry_result()
         print "ID of first found customer is " + customer_id
-        enqResultPage.close_window()
 
         # create an account
         inputPage = self.homePage.open_input_page_new_record("ACCOUNT")
@@ -35,7 +33,6 @@ class T24LoginPageTestCase(unittest.TestCase):
         inputPage.set_T24_field_value("CURRENCY", "EUR")
         inputPage.click_commit_button()
         accountId = inputPage.get_id_from_completed_transaction()
-        inputPage.close_window()
 
         # authorize the account
         self.homePage.sign_off()
@@ -44,7 +41,6 @@ class T24LoginPageTestCase(unittest.TestCase):
         authorPage.click_authorize_button()
         authorizedAccountId = inputPage.get_id_from_completed_transaction()
         assert(accountId == authorizedAccountId)
-        authorPage.close_window()
         self.homePage.sign_off()
 
         # homePage._enter_t24_command("CUSTOMER S " + accountId)
