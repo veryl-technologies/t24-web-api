@@ -8,7 +8,7 @@ class T24LoginPageTestCase(unittest.TestCase):
 
     def setUp(self):
         os.environ["PO_BASEURL"] = "http://7.117.75.57:9095"
-        os.environ["PO_BROWSER"] = "firefox"
+        os.environ["PO_BROWSER"] = "firefox"   # phantomjs
         
         self.loginpage = T24LoginPage()
         self.loginpage.open()

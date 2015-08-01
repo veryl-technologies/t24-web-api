@@ -46,7 +46,7 @@ class T24LoginPage(T24Page):
     def _click_login(self):
         self.click_element("login button")
         T24ExecutionContext.Instance().set_current_page(T24HomePage())
-        return T24ExecutionContext.Instance().CurrentPage
+        return T24ExecutionContext.Instance().get_current_page()
 
     @robot_alias("enter_T24_credentials")
     def enter_T24_credentials(self, username, password):
@@ -80,7 +80,7 @@ class T24HomePage(T24Page):
         self.select_frame(self.selectors["banner frame"])
         self.click_link("Sign Off")
         T24ExecutionContext.Instance().set_current_page(T24LoginPage())
-        return T24ExecutionContext.Instance().CurrentPage
+        return T24ExecutionContext.Instance().get_current_page()
 
     # Enter a T24 command and simulate an Enter
     def _enter_t24_command(self, text):
@@ -101,8 +101,8 @@ class T24HomePage(T24Page):
         return self
 
     def _make_sure_home_page_is_active(self):
-        if not isinstance(T24ExecutionContext.Instance().CurrentPage, T24HomePage):
-            T24ExecutionContext.Instance().CurrentPage.close_window()
+        if not isinstance(T24ExecutionContext.Instance().get_current_page(), T24HomePage):
+            T24ExecutionContext.Instance().get_current_page().close_window()
             T24ExecutionContext.Instance().set_current_page(T24HomePage())  # maybe not create new object for home page
 
     # Enter a T24 enquiry API command
@@ -116,9 +116,8 @@ class T24HomePage(T24Page):
 
         self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
 
-
         T24ExecutionContext.Instance().set_current_page(T24EnquiryResultPage())
-        return T24ExecutionContext.Instance().CurrentPage
+        return T24ExecutionContext.Instance().get_current_page()
 
     # Opens a T24 input page
     @robot_alias("open_input_page_new_record")
@@ -127,7 +126,7 @@ class T24HomePage(T24Page):
         self._enter_t24_command(version + " I F3")
 
         T24ExecutionContext.Instance().set_current_page(T24RecordInputPage())
-        return T24ExecutionContext.Instance().CurrentPage
+        return T24ExecutionContext.Instance().get_current_page()
 
     @robot_alias("open_edit_page")
     def open_edit_page(self, version, record_id):
@@ -135,7 +134,7 @@ class T24HomePage(T24Page):
         self._enter_t24_command(version + " I " + record_id)
 
         T24ExecutionContext.Instance().set_current_page(T24RecordInputPage())
-        return T24ExecutionContext.Instance().CurrentPage
+        return T24ExecutionContext.Instance().get_current_page()
 
     def open_see_page(self, version, record_id):
         T24ExecutionContext.Instance().add_operation(T24OperationType.SeeRecord)
@@ -147,7 +146,7 @@ class T24HomePage(T24Page):
         self._enter_t24_command(version + " A " + record_id)
 
         T24ExecutionContext.Instance().set_current_page(T24RecordInputPage())
-        return T24ExecutionContext.Instance().CurrentPage
+        return T24ExecutionContext.Instance().get_current_page()
 
     @robot_alias("open_see_page")
     def open_see_page(self, version, record_id):
@@ -155,7 +154,7 @@ class T24HomePage(T24Page):
         self._enter_t24_command(version + " S " + record_id)
 
         T24ExecutionContext.Instance().set_current_page(T24RecordSeePage())
-        return T24ExecutionContext.Instance().CurrentPage
+        return T24ExecutionContext.Instance().get_current_page()
 
 class T24EnquiryStartPage(T24Page):
     """ Models the T24 Enquiry Start Page"""
@@ -183,7 +182,7 @@ class T24EnquiryStartPage(T24Page):
         self.click_element(self.selectors["find button"])
 
         T24ExecutionContext.Instance().set_current_page(T24EnquiryResultPage())
-        return T24ExecutionContext.Instance().CurrentPage
+        return T24ExecutionContext.Instance().get_current_page()
 
 class T24EnquiryResultPage(T24Page):
     """ Models the T24 Enquiry Result Page"""
