@@ -103,7 +103,7 @@ class T24HomePage(T24Page):
     def _make_sure_home_page_is_active(self):
         if not isinstance(T24ExecutionContext.Instance().get_current_page(), T24HomePage):
             T24ExecutionContext.Instance().get_current_page().close_window()
-            T24ExecutionContext.Instance().set_current_page(T24HomePage())  # maybe not create new object for home page
+            T24ExecutionContext.Instance().set_current_page(self)  # maybe not create new object for home page
 
     # Enter a T24 enquiry API command
     @robot_alias("run_t24_enquiry")
