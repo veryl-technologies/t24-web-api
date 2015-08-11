@@ -136,10 +136,6 @@ class T24HomePage(T24Page):
         T24ExecutionContext.Instance().set_current_page(T24RecordInputPage())
         return T24ExecutionContext.Instance().get_current_page()
 
-    def open_see_page(self, version, record_id):
-        T24ExecutionContext.Instance().add_operation(T24OperationType.SeeRecord)
-        self._enter_t24_command(version + " S " + record_id)
-
     @robot_alias("open_authorize_page")
     def open_authorize_page(self, version, record_id):
         T24ExecutionContext.Instance().add_operation(T24OperationType.StartAuthorizingRecord)

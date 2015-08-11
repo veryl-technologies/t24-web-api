@@ -1,15 +1,12 @@
 *** Settings ***
 Documentation     Just a test
-Library           t24pageobjects.T24LoginPage
-Library           t24pageobjects.T24HomePage
-Library           t24pageobjects.T24EnquiryStartPage
-Library           t24pageobjects.T24EnquiryResultPage
-Library           t24pageobjects.T24RecordSeePage
-Library           t24pageobjects.T24RecordInputPage
+Library           T24WebDriver.py
 
 *** Test Cases ***
-Scenario: See a sample customer
-    Open T24Login
-    Enter T24 Credentials    INPUTT    123456
-    Open See Page    CUSTOMER    ABCL
-    Close
+Scenario: Create and verify an account
+    T24 Login    INPUTTER
+    @{testDataFields1}=    Create List    CUSTOMER=ABCL    CATEGORY=1002    CURRENCY=EUR
+    Create Or Amend T24 Record    ACCOUNT    @{testDataFields1}    \    ${EMPTY}
+    Authorize T24 Record    ACCOUNT    ${TX_ID}    \    ${EMPTY}
+    @{validationRules1}=    Create List    CUSTOMER EQ ABCL    CATEGORY EQ 1002    CURRENCY EQ EUR
+    Check T24 Record Exists    ACCOUNT    ${TX_ID}    @{validationRules1}
