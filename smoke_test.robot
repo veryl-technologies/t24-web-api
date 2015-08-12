@@ -1,6 +1,6 @@
 *** Settings ***
 Documentation     Basic test case for creating and validating an ACCOUNT
-Test Teardown     Close All Browsers
+Test Teardown     Close Browsers
 Library           T24WebDriver.py
 Library           Selenium2Library
 
