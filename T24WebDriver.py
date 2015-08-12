@@ -15,7 +15,7 @@ class T24WebDriver:
 
     ### 'T24 Login'
     def t24_login(self, user_type="INPUTTER"):
-        print "Trying to login as: " + user_type
+        print "Trying to login as " + user_type
 
         self.login_page = T24LoginPage()
         self.login_page.open()
@@ -29,7 +29,7 @@ class T24WebDriver:
             raise NotImplementedError('TODO t24_login')
 
     def _make_sure_is_logged_in(self, user_type="INPUTTER"):
-        print "_make_sure_is_logged_in"
+        print "Check whether the current user is " + user_type
         if not self.login_page:
             self.t24_login(user_type)
         elif self.login_user_type != user_type:
@@ -104,8 +104,10 @@ class T24WebDriver:
             expected_value = validation_values[idx]
             if op == "EQ" and expected_value != actual_value:
                 errors.append("Field '" + field + "' has expected value '" + expected_value + "' but the actual value is '" + actual_value + "'")
-            if op == "LK" and expected_value not in actual_value:
+            elif op == "LK" and expected_value not in actual_value:
                 errors.append("Field '" + field + "' has expected value '" + expected_value + "' that is not part of the actual value '" + actual_value + "'")
+            else:
+                print "Verified that for field '" + field + "' '" + actual_value + "' (actual) " + op + " '" + expected_value + "' (expected)"
 
         # go back to home screen
         see_page.close_window()

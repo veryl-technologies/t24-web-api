@@ -223,6 +223,7 @@ class T24RecordSeePage(T24Page):
     @robot_alias("get_T24_field_value")
     def get_T24_field_value(self, fieldName):
         fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
+        print "Retrieved value for field " + fieldName + " = " + fieldValue
         return fieldValue
 
 class T24RecordInputPage(T24Page):
