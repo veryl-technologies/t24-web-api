@@ -64,6 +64,10 @@ class T24WebDriver:
         self.last_tx_id = self.last_input_id
         BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
         input_page.close_window()
+        self._make_home_page_default()
+
+    def _make_home_page_default(self):
+        T24ExecutionContext.Instance().set_current_page(self.home_page)
 
     ### 'Authorize T24 Record'
     def authorize_t24_record(self, app_version, record_id, extra_authorizations=0):
@@ -74,6 +78,7 @@ class T24WebDriver:
         self.last_tx_id = self.last_authorize_id
         BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
         authorize_page.close_window()
+        self._make_home_page_default()
 
     ### 'Check T24 Record Exists'
     def check_t24_record_exists(self, app, record_id, validations):
@@ -102,6 +107,11 @@ class T24WebDriver:
             if op == "LK" and expected_value not in actual_value:
                 errors.append("Field '" + field + "' has expected value '" + expected_value + "' that is not part of the actual value '" + actual_value + "'")
 
+        # go back to home screen
+        see_page.close_window()
+        self._make_home_page_default()
+
+        # fail if there are any errors
         if errors:
             BuiltIn().fail("\n".join(errors))
 
@@ -116,7 +126,7 @@ class T24WebDriver:
 
     def _get_validation_rule_parts(self, validation_rule, operator):
         items = validation_rule.split(operator, 1)
-        return items[0], operator.trim(), items[1]
+        return items[0], operator.strip(), items[1]
 
     ### 'Execute T24 Enquiry'
     def execute_T24_enquiry(self):
