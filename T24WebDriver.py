@@ -15,7 +15,7 @@ class T24WebDriver:
 
     ### 'T24 Login'
     def t24_login(self, user_type="INPUTTER"):
-        print "t24_login: " + user_type
+        print "Trying to login as: " + user_type
 
         self.login_page = T24LoginPage()
         self.login_page.open()
@@ -29,10 +29,10 @@ class T24WebDriver:
             raise NotImplementedError('TODO t24_login')
 
     def _make_sure_is_logged_in(self, user_type="INPUTTER"):
+        print "_make_sure_is_logged_in"
         if not self.login_page:
             self.t24_login(user_type)
-        else:
-            if not self.login_user_type == user_type:
+        elif self.login_user_type != user_type:
                 self.t24_logoff()
                 self.t24_login(user_type)
 
@@ -64,7 +64,6 @@ class T24WebDriver:
         self.last_tx_id = self.last_input_id
         BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
         input_page.close_window()
-        print "create_or_amend_t24_record"
 
     ### 'Authorize T24 Record'
     def authorize_t24_record(self, app_version, record_id, extra_authorizations=0):
@@ -72,13 +71,13 @@ class T24WebDriver:
         authorize_page = self.home_page.open_authorize_page(app_version, record_id)
         authorize_page.click_authorize_button()
         self.last_authorize_id = authorize_page.get_id_from_completed_transaction()
-        self.last_tx_id = self.last_input_id
-        print "authorize_t24_record"
+        self.last_tx_id = self.last_authorize_id
+        BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
+        authorize_page.close_window()
 
     ### 'Check T24 Record Exists'
     def check_t24_record_exists(self, app, record_id, validations):
         self._make_sure_is_logged_in()
-
         see_page = self.home_page.open_see_page(app, record_id)
 
         validation_fields = []
