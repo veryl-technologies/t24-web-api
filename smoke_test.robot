@@ -6,7 +6,7 @@ Library           T24WebDriver.py
 Scenario: Create and verify an account
     T24 Login    INPUTTER
     @{testDataFields1}=    Create List    CUSTOMER=ABCL    CATEGORY=1002    CURRENCY=EUR
-    Create Or Amend T24 Record    ACCOUNT    @{testDataFields1}    \    ${EMPTY}
-    Authorize T24 Record    ACCOUNT    ${TX_ID}    \    ${EMPTY}
+    Create Or Amend T24 Record    ACCOUNT    \    ${testDataFields1}    \    ${EMPTY}
+    Authorize T24 Record    ACCOUNT    ${TX_ID}    0
     @{validationRules1}=    Create List    CUSTOMER EQ ABCL    CATEGORY EQ 1002    CURRENCY EQ EUR
-    Check T24 Record Exists    ACCOUNT    ${TX_ID}    @{validationRules1}
+    Check T24 Record Exists    ACCOUNT    ${TX_ID}    ${validationRules1}
