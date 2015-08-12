@@ -107,7 +107,7 @@ class T24WebDriver:
             elif op == "LK" and expected_value not in actual_value:
                 errors.append("Field '" + field + "' has expected value '" + expected_value + "' that is not part of the actual value '" + actual_value + "'")
             else:
-                print "Verified that for field '" + field + "' '" + actual_value + "' (actual) " + op + " '" + expected_value + "' (expected)"
+                print "For field '" + field + "' verified that '" + actual_value + "' (actual) " + op + " '" + expected_value + "' (expected)"
 
         # go back to home screen
         see_page.close_window()
