@@ -42,11 +42,11 @@ class T24ExecutionContext:
         self.AuthorizedRecordsIds.append(recordId)
 
     def add_operation(self, operation):
-        print 'Executing operation: ' + operation + " ..."
+        print "Executing operation '" + operation + "' ..."
         self.Operations.append(operation)
 
     def set_current_page(self, page):
-        print 'Current page is ' + type(page).__name__ + "."
+        print "The current page is " + type(page).__name__ + "."
         self.CurrentPage = page
 
     def get_current_page(self):

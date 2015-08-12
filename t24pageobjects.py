@@ -1,8 +1,6 @@
 from robotpageobjects import Page, robot_alias
 from T24OperationType import T24OperationType
 from T24ExecutionContext import T24ExecutionContext
-import time
-from robot.utils import asserts
 
 class T24Page(Page):
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
@@ -102,6 +100,7 @@ class T24HomePage(T24Page):
 
     def _make_sure_home_page_is_active(self):
         if not isinstance(T24ExecutionContext.Instance().get_current_page(), T24HomePage):
+            print "Automatically closing " + str(T24ExecutionContext.Instance().get_current_page().__class__.__name__) + "..."
             T24ExecutionContext.Instance().get_current_page().close_window()
             T24ExecutionContext.Instance().set_current_page(self)  # maybe not create new object for home page
 
