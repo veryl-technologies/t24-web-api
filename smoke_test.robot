@@ -1,6 +1,7 @@
 *** Settings ***
 Documentation     Just a test
 Library           T24WebDriver.py
+Library           Selenium2Library
 
 *** Test Cases ***
 Scenario: Create and verify an account
