@@ -17,19 +17,18 @@ class T24WebDriver:
     def t24_login(self, user_type="INPUTTER"):
         print "Trying to login as " + user_type
 
-        self.login_page = T24LoginPage()
-        self.login_page.open()
-        self.login_user_type = user_type
+        user = BuiltIn().get_variable_value("${LOGIN_" + user_type + "}")
+        password = BuiltIn().get_variable_value("${PASSWORD_" + user_type + "}")
 
-        if user_type == "INPUTTER":
-            self.home_page = self.login_page.enter_T24_credentials("INPUTT", "123456")
-        elif user_type == "AUTHORISER":
-            self.home_page = self.login_page.enter_T24_credentials("AUTHOR", "123456")
-        else:
-            raise NotImplementedError('TODO t24_login')
+        if not self.login_page:
+            self.login_page = T24LoginPage()
+            self.login_page.open()
+
+        self.login_user_type = user_type
+        self.home_page = self.login_page.enter_T24_credentials(user, password)
 
     def _make_sure_is_logged_in(self, user_type="INPUTTER"):
-        print "Check whether the current user is " + user_type
+        print "Checking whether the current user is " + user_type
         if not self.login_page:
             self.t24_login(user_type)
         elif self.login_user_type != user_type:

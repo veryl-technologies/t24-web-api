@@ -1,8 +1,9 @@
 *** Settings ***
 Documentation     Basic test case for creating and validating an ACCOUNT
+Suite Setup       Register Keyword To Run On Failure    Nothing
 Test Teardown     Close Browsers
 Library           T24WebDriver.py
-Library           Selenium2Library
+Library           Selenium2Library    run_on_failure=Nothing
 
 *** Test Cases ***
 Scenario: Create and verify an account
