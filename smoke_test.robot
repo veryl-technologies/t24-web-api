@@ -9,7 +9,7 @@ Library           Selenium2Library    run_on_failure=Nothing
 Scenario: Create and verify an account
     T24 Login    INPUTTER
     @{testDataFields}=    Create List    CUSTOMER=ABCL    CATEGORY=1002    CURRENCY=EUR
-    Create Or Amend T24 Record    ACCOUNT    \    ${testDataFields}    \    ${EMPTY}
+    Create Or Amend T24 Record    ACCOUNT    \    ${testDataFields}    \    \
     Authorize T24 Record    ACCOUNT    ${TX_ID}    0
     @{validationRules}=    Create List    CATEGORY EQ 1-002    CURRENCY EQ EUR
     Check T24 Record Exists    ACCOUNT    ${TX_ID}    ${validationRules}
