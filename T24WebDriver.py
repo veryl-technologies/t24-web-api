@@ -20,6 +20,10 @@ class T24WebDriver:
         user = BuiltIn().get_variable_value("${LOGIN_" + user_type + "}")
         password = BuiltIn().get_variable_value("${PASSWORD_" + user_type + "}")
 
+        # TODO disable Capture Screenshot as it currently doesn't work
+        se2lib = BuiltIn().get_library_instance('Selenium2Library')
+        se2lib.register_keyword_to_run_on_failure = None
+
         if not self.login_page:
             self.login_page = T24LoginPage()
             self.login_page.open()
@@ -129,11 +133,37 @@ class T24WebDriver:
         items = validation_rule.split(operator, 1)
         return items[0], operator.strip(), items[1]
 
-    ### 'Execute T24 Enquiry'
-    def execute_T24_enquiry(self):
+    ### Executes a T24 enquiry and performs another action "Check Result" or "Read Data" or clicking on other menu
+    def execute_T24_enquiry(self, enquiry, enquiry_constraints, action, action_parameters):
         self._make_sure_is_logged_in()
-        raise NotImplementedError('TODO execute_T24_enquiry')
-        print "check_t24_record_exists"
+
+        if enquiry_constraints:
+            for i, ec in enumerate(enquiry_constraints):
+                enquiry_constraints[i] = self._normalize_parameter(ec)
+
+        if action_parameters and action == u"Check Result":
+            for i, ap in enumerate(action_parameters):
+                action_parameters[i] = self._normalize_parameter(ap)
+
+        enq_res_page = self.home_page.open_t24_enquiry(enquiry, enquiry_constraints)
+
+        if action == u"Read Data":
+            values = enq_res_page.get_values_from_enquiry_result(action_parameters)
+
+            for i, c in enumerate(action_parameters):
+                BuiltIn().set_test_variable("${ENQ_RES_" + str(c) + "}", values[i])
+            return values
+        else:
+            raise NotImplementedError('TODO execute_T24_enquiry with action: ' + action)
+
+        # go back to home screen
+        enq_res_page.close_window()
+        self._make_home_page_default()
+
+    def _normalize_parameter(self, param):
+        if ":=" in param:
+            return param.replace(":=", "", 1).replace(":", "", 1)
+        return param
 
     ### 'Validate T24 Record'
     def validate_t24_record(self):

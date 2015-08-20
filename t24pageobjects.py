@@ -210,6 +210,26 @@ class T24EnquiryResultPage(T24Page):
         res = self._get_text(self.selectors["first text column in grid"])  # TODO error handling (throw better error)
         return res
 
+    # Gets the first ID of an enquiry result
+    @robot_alias("get_values_from_enquiry_result")
+    def get_values_from_enquiry_result(self, column_indexes):
+        self.select_window("self")
+        self.wait_until_page_contains_element(self.selectors["refresh button"])
+
+        #if self._page_contains("No records matched the selection criteria"):
+        #    return "" # too slow
+
+        #if not self.wait_until_page_contains_element(self.selectors["first text column in grid"], 5):
+        #   return ""  # doesn't work
+
+        res = []
+        for c in column_indexes:
+            index = int(c) + 1
+            val = self._get_text("css=#r1 > td:nth-child(" + str(index) + ")")  # TODO error handling (throw better error)
+            res.append(val)
+
+        return res
+
 class T24RecordSeePage(T24Page):
     """ Models the T24 Record See Page"""
 
