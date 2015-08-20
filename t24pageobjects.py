@@ -6,11 +6,22 @@ class T24Page(Page):
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
     __version__ = '0.1'
 
+    def _get_current_page(self):
+        return T24ExecutionContext.Instance().get_current_page()
+
+    def _set_current_page(self, page):
+        self.log("The current page is changing to " + page.name, "DEBUG")
+        return T24ExecutionContext.Instance().set_current_page(page)
+
+    def _add_operation(self, operation):
+        self.log("Executing operation '" + operation + "' ...", "DEBUG")
+        T24ExecutionContext.Instance().add_operation(operation)
+
 class T24LoginPage(T24Page):
     """ Models the T24 login page"""
 
     # Allows us to call by proper name
-    name = "T24Login"
+    name = "T24 Login Page"
 
     # This page is found at baseurl
     uri = "/BrowserWeb"
@@ -43,12 +54,12 @@ class T24LoginPage(T24Page):
     @robot_alias("clicks__name__login_button")
     def _click_login(self):
         self.click_element("login button")
-        T24ExecutionContext.Instance().set_current_page(T24HomePage())
-        return T24ExecutionContext.Instance().get_current_page()
+        self._set_current_page(T24HomePage())
+        return self._get_current_page()
 
     @robot_alias("enter_T24_credentials")
     def enter_T24_credentials(self, username, password):
-        T24ExecutionContext.Instance().add_operation(T24OperationType.Login)
+        self._add_operation(T24OperationType.Login)
         self._type_username(username)
         self._type_password(password)
         return self._click_login()
@@ -57,7 +68,7 @@ class T24HomePage(T24Page):
     """ Models the T24 home page """
 
     # Allows us to call by proper name
-    name = "T24Home"
+    name = "T24 Home Page"
 
     # This page is found at baseurl + "/BrowserWeb"
     uri = "/BrowserWeb"
@@ -71,21 +82,22 @@ class T24HomePage(T24Page):
 
     @robot_alias("sign_off")
     def sign_off(self):
-        T24ExecutionContext.Instance().add_operation(T24OperationType.SignOff)
+        self._add_operation(T24OperationType.SignOff)
         self._make_sure_home_page_is_active()
 
         self.select_window()
         self.select_frame(self.selectors["banner frame"])
         self.click_link("Sign Off")
-        T24ExecutionContext.Instance().set_current_page(T24LoginPage())
-        return T24ExecutionContext.Instance().get_current_page()
+
+        self._set_current_page(T24LoginPage())
+        return self._get_current_page()
 
     # Enter a T24 command and simulate an Enter
     def _enter_t24_command(self, text):
 
         self._make_sure_home_page_is_active()
 
-        print "Running command: '" + text + "' ..."
+        self.log("Executing T24 command '" + text.strip() + "' ...")
 
         self.select_window()
         self.select_frame(self.selectors["banner frame"])
@@ -99,15 +111,15 @@ class T24HomePage(T24Page):
         return self
 
     def _make_sure_home_page_is_active(self):
-        if not isinstance(T24ExecutionContext.Instance().get_current_page(), T24HomePage):
-            print "Automatically closing " + str(T24ExecutionContext.Instance().get_current_page().__class__.__name__) + "..."
-            T24ExecutionContext.Instance().get_current_page().close_window()
-            T24ExecutionContext.Instance().set_current_page(self)  # maybe not create new object for home page
+        if not isinstance(self._get_current_page(), T24HomePage):
+            self.log("Automatically closing " + self._get_current_page().name + "...")
+            self._get_current_page().close_window()
+            self._set_current_page(self)  # don't create new object for home page (reuse the current one)
 
     # Enter a T24 enquiry API command
     @robot_alias("run_t24_enquiry")
     def open_t24_enquiry(self, enquiry_name, enquiry_filters=[]):
-        T24ExecutionContext.Instance().add_operation(T24OperationType.Enquiry)
+        self._add_operation(T24OperationType.Enquiry)
         # prepare the filter text
         if not enquiry_filters:
             enquiry_filters = ["@ID GT 0"]  # This is a workaround only (to jump directly to the results page)
@@ -115,47 +127,47 @@ class T24HomePage(T24Page):
 
         self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
 
-        T24ExecutionContext.Instance().set_current_page(T24EnquiryResultPage())
-        return T24ExecutionContext.Instance().get_current_page()
+        self._set_current_page(T24EnquiryResultPage())
+        return self._get_current_page()
 
     # Opens a T24 input page
     @robot_alias("open_input_page_new_record")
     def open_input_page_new_record(self, version):
-        T24ExecutionContext.Instance().add_operation(T24OperationType.StartInputNewRecord)
+        self._add_operation(T24OperationType.StartInputNewRecord)
         self._enter_t24_command(version + " I F3")
 
-        T24ExecutionContext.Instance().set_current_page(T24RecordInputPage())
-        return T24ExecutionContext.Instance().get_current_page()
+        self._set_current_page(T24RecordInputPage())
+        return self._get_current_page()
 
     @robot_alias("open_edit_page")
     def open_edit_page(self, version, record_id):
-        T24ExecutionContext.Instance().add_operation(T24OperationType.StertEditExitingRecord)
+        self._add_operation(T24OperationType.StertEditExitingRecord)
         self._enter_t24_command(version + " I " + record_id)
 
-        T24ExecutionContext.Instance().set_current_page(T24RecordInputPage())
-        return T24ExecutionContext.Instance().get_current_page()
+        self._set_current_page(T24RecordInputPage())
+        return self._get_current_page()
 
     @robot_alias("open_authorize_page")
     def open_authorize_page(self, version, record_id):
-        T24ExecutionContext.Instance().add_operation(T24OperationType.StartAuthorizingRecord)
+        self._add_operation(T24OperationType.StartAuthorizingRecord)
         self._enter_t24_command(version + " A " + record_id)
 
-        T24ExecutionContext.Instance().set_current_page(T24RecordInputPage())
-        return T24ExecutionContext.Instance().get_current_page()
+        self._set_current_page(T24RecordInputPage())
+        return self._get_current_page()
 
     @robot_alias("open_see_page")
     def open_see_page(self, version, record_id):
-        T24ExecutionContext.Instance().add_operation(T24OperationType.SeeRecord)
+        self._add_operation(T24OperationType.SeeRecord)
         self._enter_t24_command(version + " S " + record_id)
 
-        T24ExecutionContext.Instance().set_current_page(T24RecordSeePage())
-        return T24ExecutionContext.Instance().get_current_page()
+        self._set_current_page(T24RecordSeePage())
+        return self._get_current_page()
 
 class T24EnquiryStartPage(T24Page):
     """ Models the T24 Enquiry Start Page"""
 
     # Allows us to call by proper name
-    name = "T24EnquiryFilters"
+    name = "T24 Enquiry Filters Page"
 
     # Probably not necessary
     uri = "/BrowserWeb/servlet/BrowserServlet#1"
@@ -176,14 +188,14 @@ class T24EnquiryStartPage(T24Page):
         self.click_element(self.selectors["clear selection link"])
         self.click_element(self.selectors["find button"])
 
-        T24ExecutionContext.Instance().set_current_page(T24EnquiryResultPage())
-        return T24ExecutionContext.Instance().get_current_page()
+        self._set_current_page(T24EnquiryResultPage())
+        return self._get_current_page()
 
 class T24EnquiryResultPage(T24Page):
     """ Models the T24 Enquiry Result Page"""
 
     # Allows us to call by proper name
-    name = "T24EnquiryResults"
+    name = "T24 Enquiry Results Page"
 
     # Probably not necessary
     uri = "/BrowserWeb/servlet/BrowserServlet#1"
@@ -234,7 +246,7 @@ class T24RecordSeePage(T24Page):
     """ Models the T24 Record See Page"""
 
     # Allows us to call by proper name
-    name = "T24RecordSeePage"
+    name = "T24 Readonly Record Page"
 
     # Probably not necessary
     uri = "/BrowserWeb/servlet/BrowserServlet#1"
@@ -243,14 +255,14 @@ class T24RecordSeePage(T24Page):
     @robot_alias("get_T24_field_value")
     def get_T24_field_value(self, fieldName):
         fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
-        print "Retrieved value for field " + fieldName + " = " + fieldValue
+        self.log("Retrieved value for field '" + fieldName + "' is '" + fieldValue + "'")
         return fieldValue
 
 class T24RecordInputPage(T24Page):
     """ Models the T24 Record Input Page"""
 
     # Allows us to call by proper name
-    name = "T24RecordInput"
+    name = "T24 Record Edit Page"
 
     # Probably not necessary
     uri = "/BrowserWeb/servlet/BrowserServlet#1"
@@ -275,6 +287,7 @@ class T24RecordInputPage(T24Page):
     # Set a value in a text field, by specifying the underlying T24 field name
     @robot_alias("set_T24_field_value")
     def set_T24_field_value(self, fieldName, fieldText):
+        self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'")
         self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
         return self
 

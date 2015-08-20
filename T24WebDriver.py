@@ -1,4 +1,4 @@
-from t24pageobjects import T24LoginPage, T24HomePage, T24EnquiryStartPage, T24EnquiryResultPage, T24RecordSeePage, T24RecordInputPage
+from t24pageobjects import T24LoginPage
 from T24ExecutionContext import T24ExecutionContext
 from robot.libraries.BuiltIn import BuiltIn
 
@@ -13,9 +13,15 @@ class T24WebDriver:
     last_input_id = None
     last_authorize_id = None
 
+    def _log_info(self, message):
+        BuiltIn().log(message, "INFO")
+
+    def _log_debug(self, message):
+        BuiltIn().log(message, "DEBUG")
+
     ### 'T24 Login'
     def t24_login(self, user_type="INPUTTER"):
-        print "Trying to login as " + user_type
+        self._log_info('Trying to login as ' + user_type)
 
         user = BuiltIn().get_variable_value("${LOGIN_" + user_type + "}")
         password = BuiltIn().get_variable_value("${PASSWORD_" + user_type + "}")
@@ -32,7 +38,7 @@ class T24WebDriver:
         self.home_page = self.login_page.enter_T24_credentials(user, password)
 
     def _make_sure_is_logged_in(self, user_type="INPUTTER"):
-        print "Checking whether the current user is " + user_type
+        self._log_debug('Checking whether the current user is ' + user_type)
         if not self.login_page:
             self.t24_login(user_type)
         elif self.login_user_type != user_type:
@@ -47,7 +53,7 @@ class T24WebDriver:
     ### 'Execute T24 Menu Command'
     def execute_t24_menu_command(self):
         self._make_sure_is_logged_in()
-        print "execute_t24_menu_command"
+        raise NotImplementedError('TODO execute_t24_menu_command')
 
     ### 'Create Or Amend T24 Record'
     def create_or_amend_t24_record(self, app_version, record_id, record_field_values, oveerrides_handling=None, error_handling=None, post_verification=None):
@@ -110,7 +116,7 @@ class T24WebDriver:
             elif op == "LK" and expected_value not in actual_value:
                 errors.append("Field '" + field + "' has expected value '" + expected_value + "' that is not part of the actual value '" + actual_value + "'")
             else:
-                print "For field '" + field + "' verified that '" + actual_value + "' (actual) " + op + " '" + expected_value + "' (expected)"
+                self._log_info("For field '" + field + "' verified that '" + actual_value + "' (actual) " + op + " '" + expected_value + "' (expected)")
 
         # go back to home screen
         see_page.close_window()
@@ -169,7 +175,6 @@ class T24WebDriver:
     def validate_t24_record(self):
         self._make_sure_is_logged_in()
         raise NotImplementedError('TODO validate_t24_record')
-        print "check_t24_record_exists"
 
     def close_browsers(self):
         if self.login_page:
