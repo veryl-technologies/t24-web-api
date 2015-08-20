@@ -151,7 +151,7 @@ class T24WebDriver:
             values = enq_res_page.get_values_from_enquiry_result(action_parameters)
 
             for i, c in enumerate(action_parameters):
-                BuiltIn().set_test_variable("${ENQ_RES_" + str(c) + "}", values[i])
+                BuiltIn().set_test_variable("${ENQ_RES_" + str(c).strip() + "}", values[i])
             return values
         else:
             raise NotImplementedError('TODO execute_T24_enquiry with action: ' + action)
