@@ -10,11 +10,11 @@ class T24Page(Page):
         return T24ExecutionContext.Instance().get_current_page()
 
     def _set_current_page(self, page):
-        self.log("The current page is changing to " + page.name, "DEBUG")
+        self.log("The current page is changing to " + page.name, "DEBUG", False)
         return T24ExecutionContext.Instance().set_current_page(page)
 
     def _add_operation(self, operation):
-        self.log("Executing operation '" + operation + "' ...", "DEBUG")
+        self.log("Executing operation '" + operation + "' ...", "DEBUG", False)
         T24ExecutionContext.Instance().add_operation(operation)
 
 class T24LoginPage(T24Page):
@@ -97,7 +97,7 @@ class T24HomePage(T24Page):
 
         self._make_sure_home_page_is_active()
 
-        self.log("Executing T24 command '" + text.strip() + "' ...")
+        self.log("Executing command '" + text.strip() + "' ...")
 
         self.select_window()
         self.select_frame(self.selectors["banner frame"])
@@ -246,7 +246,7 @@ class T24RecordSeePage(T24Page):
     """ Models the T24 Record See Page"""
 
     # Allows us to call by proper name
-    name = "T24 Readonly Record Page"
+    name = "T24 Record Page"
 
     # Probably not necessary
     uri = "/BrowserWeb/servlet/BrowserServlet#1"
