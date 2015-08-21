@@ -107,7 +107,7 @@ class T24WebDriver:
 
         # check for expected & actual result
         errors = []
-        for idx, field in enumerate(validation_fields) :
+        for idx, field in enumerate(validation_fields):
             actual_value = see_page.get_T24_field_value(field)
             op = validation_operators[idx]
             expected_value = validation_values[idx]
@@ -127,6 +127,8 @@ class T24WebDriver:
             BuiltIn().fail("\n".join(errors))
 
     def _parse_validation_rule(self, validation_rule):
+        validation_rule = self._normalize_parameter(validation_rule)
+
         if " EQ " in validation_rule:
             return self._get_validation_rule_parts(validation_rule, " EQ ")
 
