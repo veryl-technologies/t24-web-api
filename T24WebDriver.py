@@ -179,3 +179,4 @@ class T24WebDriver:
     def close_browsers(self):
         if self.login_page:
             self.login_page.close_all_browsers()
+            self.login_page = None
