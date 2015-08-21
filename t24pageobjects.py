@@ -97,7 +97,7 @@ class T24HomePage(T24Page):
 
         self._make_sure_home_page_is_active()
 
-        self.log("Executing command '" + text.strip() + "' ...", False)
+        self.log("Executing command '" + text.strip() + "' ...", "INFO", False)
 
         self.select_window()
         self.select_frame(self.selectors["banner frame"])
@@ -112,7 +112,7 @@ class T24HomePage(T24Page):
 
     def _make_sure_home_page_is_active(self):
         if not isinstance(self._get_current_page(), T24HomePage):
-            self.log("Automatically closing " + self._get_current_page().name + "...", False)
+            self.log("Automatically closing " + self._get_current_page().name + "...", "INFO", False)
             self._get_current_page().close_window()
             self._set_current_page(self)  # don't create new object for home page (reuse the current one)
 
@@ -255,7 +255,7 @@ class T24RecordSeePage(T24Page):
     @robot_alias("get_T24_field_value")
     def get_T24_field_value(self, fieldName):
         fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
-        self.log("Retrieved value for field '" + fieldName + "' is '" + fieldValue + "'", False)
+        self.log("Retrieved value for field '" + fieldName + "' is '" + fieldValue + "'", "INFO", False)
         return fieldValue
 
 class T24RecordInputPage(T24Page):
@@ -287,7 +287,7 @@ class T24RecordInputPage(T24Page):
     # Set a value in a text field, by specifying the underlying T24 field name
     @robot_alias("set_T24_field_value")
     def set_T24_field_value(self, fieldName, fieldText):
-        self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", False)
+        self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
         self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
         return self
 
