@@ -16,7 +16,7 @@ Scenario: Create and verify an account
 
 Scenario: Verify %CUSTOMER enquiry
     @{enquiryConstraints}=    Create List    SECTOR :EQ:= 1000
-    @{validationRules}=    Create List    1    2
-    Execute T24 Enquiry    %CUSTOMER    ${enquiryConstraints}    Read Data    ${validationRules}
+    @{validationRules}=    Create List    1 :EQ:= 129179    2 :EQ:= ABC000604
+    Execute T24 Enquiry    %CUSTOMER    ${enquiryConstraints}    Check Result    ${validationRules}
     @{validationRules}=    Create List    MNEMONIC :EQ:= ABC000604
     Check T24 Record Exists    CUSTOMER    ${ENQ_RES_1}    ${validationRules}
