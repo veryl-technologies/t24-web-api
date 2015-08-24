@@ -115,6 +115,8 @@ class T24WebDriver:
         errors = []
         for idx, field in enumerate(validation_fields):
             actual_value = see_page.get_T24_field_value(field)
+            BuiltIn().set_test_variable("${SEE_RES_" + field.strip() + "}", actual_value)
+
             op = validation_operators[idx]
             expected_value = validation_values[idx]
             if op == "EQ" and expected_value != actual_value:
