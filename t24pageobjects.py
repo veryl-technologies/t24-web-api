@@ -1,4 +1,5 @@
 from robotpageobjects import Page, robot_alias
+from robot.libraries.BuiltIn import BuiltIn
 from T24OperationType import T24OperationType
 from T24ExecutionContext import T24ExecutionContext
 
@@ -16,6 +17,31 @@ class T24Page(Page):
     def _add_operation(self, operation):
         self.log("Executing operation '" + operation + "' ...", "DEBUG", False)
         T24ExecutionContext.Instance().add_operation(operation)
+
+    @staticmethod
+    def _get_screenshot_level(level):
+        if not level:
+            return 0
+
+        level = level.upper()
+        if level == "INFO":
+            return 1
+        if level == "VERBOSE":
+            return 2
+        return 0
+
+    def _get_current_screenshot_level(self):
+        level = BuiltIn().get_variable_value("${SCREENSHOTS}")
+        return self._get_screenshot_level(level)
+
+    def _take_page_screenshot(self, level="INFO"):
+        if self._get_screenshot_level(level) < self._get_current_screenshot_level():
+            return
+
+        try:
+            self.capture_page_screenshot()
+        except:
+            pass
 
 class T24LoginPage(T24Page):
     """ Models the T24 login page"""
@@ -62,6 +88,9 @@ class T24LoginPage(T24Page):
         self._add_operation(T24OperationType.Login)
         self._type_username(username)
         self._type_password(password)
+
+        self._take_page_screenshot("VERBOSE")
+
         return self._click_login()
 
 class T24HomePage(T24Page):
@@ -104,8 +133,10 @@ class T24HomePage(T24Page):
 
         self.wait_until_page_contains_element(self.selectors["command line"])
         self.input_text(self.selectors["command line"], text + "\n")
+        self._take_page_screenshot("VERBOSE")
 
         self.select_window("new")
+        self._take_page_screenshot("VERBOSE")
 
         # We always return something from a page object, even if it's the same page object instance we are currently on.
         return self
@@ -187,6 +218,9 @@ class T24EnquiryStartPage(T24Page):
 
         self.click_element(self.selectors["clear selection link"])
         self.click_element(self.selectors["find button"])
+
+        self.select_window("new")
+        self._take_page_screenshot("VERBOSE")
 
         self._set_current_page(T24EnquiryResultPage())
         return self._get_current_page()
@@ -277,6 +311,9 @@ class T24RecordInputPage(T24Page):
     @robot_alias("get_id_from_completed_transaction")
     def get_id_from_completed_transaction(self):
         self.wait_until_page_contains("Txn Complete")  # Put a timeout or wait for error, too
+
+        self._take_page_screenshot("VERBOSE")
+
         confirmationMsg = self._get_text(self.selectors["transaction complete"])
         transactionId = self._get_id_from_transaction_confirmation_text(confirmationMsg)
         return transactionId
@@ -289,10 +326,13 @@ class T24RecordInputPage(T24Page):
     def set_T24_field_value(self, fieldName, fieldText):
         self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
         self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
+
         return self
 
     # Clicks the Commit Button When Dealing with T24 Transactions
     def click_commit_button(self):
+        self._take_page_screenshot("VERBOSE")
+
         self.click_element("css=img[alt=\"Commit the deal\"]")
         return self
 
