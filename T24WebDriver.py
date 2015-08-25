@@ -100,7 +100,7 @@ class T24WebDriver:
         authorize_page.close_window()
         self._make_home_page_default()
 
-    def check_t24_record_exists(self, app, record_id, validations):
+    def check_t24_record(self, app, record_id, validations):
         """
         Retrieves the T24 record by its unique ID and verifies its fields against some predefined criteria
         """
