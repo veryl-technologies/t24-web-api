@@ -35,7 +35,7 @@ class T24Page(Page):
         return self._get_screenshot_level(level)
 
     def _take_page_screenshot(self, level="INFO"):
-        if self._get_screenshot_level(level) < self._get_current_screenshot_level():
+        if self._get_screenshot_level(level) > self._get_current_screenshot_level():
             return
 
         try:
