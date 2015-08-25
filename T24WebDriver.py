@@ -115,16 +115,19 @@ class T24WebDriver:
         errors = []
         for idx, field in enumerate(validation_fields):
             actual_value = see_page.get_T24_field_value(field)
-            BuiltIn().set_test_variable("${SEE_RES_" + field.strip() + "}", actual_value)
-
             op = validation_operators[idx]
             expected_value = validation_values[idx]
-            if op == "EQ" and expected_value != actual_value:
-                errors.append("Field '" + field + "' has expected value '" + expected_value + "' but the actual value is '" + actual_value + "'")
-            elif op == "LK" and expected_value not in actual_value:
-                errors.append("Field '" + field + "' has expected value '" + expected_value + "' that is not part of the actual value '" + actual_value + "'")
+
+            if op == ">>":
+                BuiltIn().set_test_variable("${" + expected_value.strip() + "}", actual_value)
             else:
-                self._log_info("For field '" + field + "' verified that '" + actual_value + "' (actual) " + op + " '" + expected_value + "' (expected)")
+                if op == "EQ" and expected_value != actual_value:
+                    errors.append("Field '" + field + "' has expected value '" + expected_value + "' but the actual value is '" + actual_value + "'")
+                elif op == "LK" and expected_value not in actual_value:
+                    errors.append("Field '" + field + "' has expected value '" + expected_value + "' that is not part of the actual value '" + actual_value + "'")
+                else:
+                    self._log_info("For field '" + field + "' verified that the actual value '" + actual_value + "' " +
+                                   self._get_operator_friendly_name(op) + " the expected value '" + expected_value + "'")
 
         # go back to home screen
         see_page.close_window()
@@ -133,6 +136,15 @@ class T24WebDriver:
         # fail if there are any validation errors
         if errors:
             BuiltIn().fail("\n".join(errors))
+
+    @staticmethod
+    def _get_operator_friendly_name(op):
+        if op == "EQ":
+            return "equals"
+        elif op == "LK":
+            return "contains"
+        else:
+            return op
 
     def _parse_validation_rules(self, validations):
         validation_fields = []
@@ -156,6 +168,9 @@ class T24WebDriver:
 
         if " LK " in validation_rule:
             return self._get_validation_rule_parts(validation_rule, " LK ")
+
+        if " >> " in validation_rule:
+            return self._get_validation_rule_parts(validation_rule, " >> ")
 
         raise NotImplementedError("Unexpected text for filter/validation: '" + validation_rule + "'")
 
@@ -200,22 +215,27 @@ class T24WebDriver:
             # read the data from the enquiry result
             values = enq_res_page.get_values_from_enquiry_result(enq_res_columns)
 
-            # save data into RF variables
+            # need to save data into RF variables
             for i, c in enumerate(enq_res_columns):
-                BuiltIn().set_test_variable("${ENQ_RES_" + str(c).strip() + "}", values[i])
+                if validation_operators[i] == ">>":
+                    BuiltIn().set_test_variable("${" + validation_values[i].strip() + "}", values[i])
 
             # verify the results
             errors = []
             for idx, column in enumerate(enq_res_columns):
-                actual_value = values[idx]
                 op = validation_operators[idx]
+                if op == ">>":
+                    continue
+
+                actual_value = values[idx]
                 expected_value = validation_values[idx]
                 if op == "EQ" and expected_value != actual_value:
                     errors.append("Column '" + column + "' has expected value '" + expected_value + "' but the actual value is '" + actual_value + "'")
                 elif op == "LK" and expected_value not in actual_value:
                     errors.append("Column '" + column + "' has expected value '" + expected_value + "' that is not part of the actual value '" + actual_value + "'")
                 else:
-                    self._log_info("For column '" + column + "' verified that '" + actual_value + "' (actual) " + op + " '" + expected_value + "' (expected)")
+                    self._log_info("For column '" + column + "' verified that the actual value '" + actual_value + "' " +
+                                   self._get_operator_friendly_name(op) + " the expected value '" + expected_value + "'")
 
             # fail if there are any validation errors
             if errors:
