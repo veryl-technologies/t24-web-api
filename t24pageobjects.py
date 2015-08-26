@@ -39,7 +39,8 @@ class T24Page(Page):
             return
 
         try:
-            self.capture_page_screenshot()
+            fileName = T24ExecutionContext.Instance().get_next_screenshot_filename()
+            self.capture_page_screenshot(fileName)
         except:
             pass
 

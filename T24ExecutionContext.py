@@ -16,6 +16,8 @@ class T24ExecutionContext:
 
     CurrentPage = None
 
+    _ScreenshotIndex = 0
+
     def clear(self):
         self.NewRecordsIds = []
         self.TypicalsOfNewRecords = []
@@ -46,3 +48,7 @@ class T24ExecutionContext:
 
     def get_current_page(self):
         return self.CurrentPage
+
+    def get_next_screenshot_filename(self):
+        self._ScreenshotIndex = self._ScreenshotIndex + 1
+        return "screenshot_" + str(self._ScreenshotIndex) + ".png"
