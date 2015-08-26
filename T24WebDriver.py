@@ -19,7 +19,6 @@ class T24WebDriver:
     def _log_debug(self, message):
         BuiltIn().log(message, "DEBUG")
 
-
     def t24_login(self, user_type="INPUTTER"):
         """
         Enters login credential in the T24 login page for the specified user type.
@@ -28,8 +27,15 @@ class T24WebDriver:
 
         self._log_info('Trying to login as ' + user_type)
 
-        user = BuiltIn().get_variable_value("${LOGIN_" + user_type + "}")
-        password = BuiltIn().get_variable_value("${PASSWORD_" + user_type + "}")
+        var_user_name = "${LOGIN_" + user_type + "}"
+        user = BuiltIn().get_variable_value(var_user_name)
+        if not user:
+            BuiltIn().fail("Please specify a user name in a variable " + var_user_name)
+
+        var_pass = "${PASSWORD_" + user_type + "}"
+        password = BuiltIn().get_variable_value(var_pass)
+        if not password:
+            BuiltIn().fail("Please specify a password in a variable " + var_pass)
 
         # TODO disable Capture Screenshot as it currently doesn't work
         se2lib = BuiltIn().get_library_instance('Selenium2Library')
