@@ -1,6 +1,5 @@
 *** Settings ***
-Documentation     Basic test case for creating and validating an ACCOUNT
-Suite Setup       Register Keyword To Run On Failure    Nothing
+Documentation     Test suite that demonstrates the main functionalities of I,A,S,ENQ commands
 Test Teardown     Close Browsers
 Library           T24WebDriver.py
 Library           Selenium2Library    run_on_failure=Nothing
@@ -17,10 +16,10 @@ Scenario: Create and verify an account
     Check T24 Record    ACCOUNT    ${TX_ID}    ${validationRules}
 
 Scenario: Verify %CUSTOMER enquiry
-    [Documentation]    A sample test with enquiry
+    [Documentation]    A sample test case with enquiry
     [Tags]    tag1    tag3
     @{enquiryConstraints}=    Create List    SECTOR :EQ:= 1000
-    @{validationRules}=    Create List    1 :EQ:= 129179    2 :EQ:= ABC000604
+    @{validationRules}=    Create List    1 :EQ:= 129179    1 >> CUST_ID    2 >> CUST_MNEMONIC
     Execute T24 Enquiry    %CUSTOMER    ${enquiryConstraints}    Check Result    ${validationRules}
-    @{validationRules}=    Create List    MNEMONIC :EQ:= ABC000604
-    Check T24 Record    CUSTOMER    ${ENQ_RES_1}    ${validationRules}
+    @{validationRules}=    Create List    MNEMONIC :EQ:= ${CUST_MNEMONIC}
+    Check T24 Record    CUSTOMER    ${CUST_ID}    ${validationRules}
