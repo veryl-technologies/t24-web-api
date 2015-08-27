@@ -31,8 +31,11 @@ class T24Page(Page):
         return 0
 
     def _get_current_screenshot_level(self):
-        level = BuiltIn().get_variable_value("${SCREENSHOTS}")
-        return self._get_screenshot_level(level)
+        try:
+            level = BuiltIn().get_variable_value("${SCREENSHOTS}")
+            return self._get_screenshot_level(level)
+        except:
+            return 0
 
     def _take_page_screenshot(self, level="INFO"):
         if self._get_screenshot_level(level) > self._get_current_screenshot_level():
@@ -154,13 +157,15 @@ class T24HomePage(T24Page):
         self._add_operation(T24OperationType.Enquiry)
         # prepare the filter text
         if not enquiry_filters:
-            enquiry_filters = ["@ID GT 0"]  # This is a workaround only (to jump directly to the results page)
-        filter_text = ' '.join([str(f) for f in enquiry_filters])
-
-        self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
-
-        self._set_current_page(T24EnquiryResultPage())
-        return self._get_current_page()
+            self._enter_t24_command("ENQ " + enquiry_name)
+            enq_start_page = T24EnquiryStartPage()
+            self._set_current_page(enq_start_page)
+            return enq_start_page.run_enquiry_no_filters()
+        else:
+            filter_text = ' '.join([str(f) for f in enquiry_filters])
+            self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
+            self._set_current_page(T24EnquiryResultPage())
+            return self._get_current_page()
 
     # Opens a T24 input page
     @robot_alias("open_input_page_new_record")
@@ -220,7 +225,6 @@ class T24EnquiryStartPage(T24Page):
         self.click_element(self.selectors["clear selection link"])
         self.click_element(self.selectors["find button"])
 
-        self.select_window("new")
         self._take_page_screenshot("VERBOSE")
 
         self._set_current_page(T24EnquiryResultPage())

@@ -14,6 +14,12 @@ class T24LoginPageTestCase(unittest.TestCase):
         self.loginpage.open()
         self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
 
+    def test_enquiry(self):
+        enqResultPage = self.homePage.open_t24_enquiry("AGENT.STATUS")
+        id = enqResultPage.get_first_id_of_enquiry_result()
+        print "ID of first found record is " + id
+        self.homePage.sign_off()
+
     def test_see(self):
         seePage = self.homePage.open_see_page("CUSTOMER", "ABCL")
         print seePage.get_T24_field_value("MNEMONIC")
