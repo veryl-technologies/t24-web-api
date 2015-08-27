@@ -8,16 +8,17 @@ Library           Dialogs
 
 *** Test Cases ***
 Scenario: Run AGENT.STATUS
+    [Documentation]    Run one enquiry twice with a manual pause between
     @{enquiryConstraints}=    Create List
-    @{validationRules}=    Create List    1    2    3    4    5
-    ...    6
-    Execute T24 Enquiry    AGENT.STATUS    ${enquiryConstraints}    Read Data    ${validationRules}
+    @{validationRules}=    Create List    1 >> AGENT.ID    2 >> T24.SESSION.NO    3 >> SERVER.NAME    4 >> AGENT.STATUS    5 >> PROCESS.ID
+    Execute T24 Enquiry    AGENT.STATUS    ${enquiryConstraints}    Check Result    ${validationRules}
     Dialogs.Pause Execution    Let' test pausing
-    @{enquiryConstraints}=    Create List    df
-    @{validationRules}=    Create List    fdgdf
-    Execute T24 Enquiry    \    ${enquiryConstraints}    \    ${validationRules}
+    @{enquiryConstraints}=    Create List
+    @{validationRules}=    Create List    1 >> AGENT.ID    2 >> T24.SESSION.NO
+    Execute T24 Enquiry    AGENT.STATUS    ${enquiryConstraints}    \    ${validationRules}
 
 Manual COB
+    [Documentation]    Showcase all options for manual actions
     [Tags]    manual
     Dialogs.Execute Manual Step    Please Run COB
     Dialogs.Get Selection From User    For which T24 company    AAA    BB    CC    DD

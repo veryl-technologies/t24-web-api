@@ -192,10 +192,9 @@ class T24WebDriver:
 
     def execute_T24_enquiry(self, enquiry, enquiry_constraints, action, action_parameters):
         """
-        Executed a T24 enquiry with the specified criteria and:
-        either fetches the values of the first enquiry result (via action "Read Data")
-        or fetches and verifies the values of the first enquiry result (via action "Check Result")
-        or does a custom action by clicking on the corresponding link/button/menu item on the enquiry row
+        Execute a T24 enquiry with the specified criteria and processes the first found result
+        either by fetching and optionally verifying its values (via action "Check Result")
+        or by applying a custom like clicking on the corresponding link/button/menu item
         """
 
         # prepare the enquiry constraints
@@ -207,14 +206,7 @@ class T24WebDriver:
         self._make_sure_is_logged_in()
         enq_res_page = self.home_page.open_t24_enquiry(enquiry, enquiry_constraints)
 
-        if action == u"Read Data":
-            values = enq_res_page.get_values_from_enquiry_result(action_parameters)
-
-            # save data into RF variables
-            for i, c in enumerate(action_parameters):
-                BuiltIn().set_test_variable("${ENQ_RES_" + str(c).strip() + "}", values[i])
-
-        elif action == u"Check Result":
+        if not action or not action.strip() or action == u"Check Result":
             # parse the rules in 3 arrays
             enq_res_columns, validation_operators, validation_values = self._parse_validation_rules(action_parameters)
 
@@ -247,7 +239,7 @@ class T24WebDriver:
             if errors:
                 BuiltIn().fail("\n".join(errors))
         else:
-            raise NotImplementedError("Not implemented execution actions on enquiry results. Can't apply " + action)
+            raise NotImplementedError("Not implemented execution actions on enquiry results. Can't apply action " + action)
 
         # go back to home screen
         enq_res_page.close_window()
