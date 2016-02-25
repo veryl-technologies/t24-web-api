@@ -293,7 +293,10 @@ class T24RecordSeePage(T24Page):
     # Gets a text value from the underlying T24 field name
     @robot_alias("get_T24_field_value")
     def get_T24_field_value(self, fieldName):
-        fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
+        if fieldName == "ID" or fieldName == "@ID":
+            fieldValue = self._get_text("xpath=.//*[@id='transactionId']")
+        else:
+            fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
         self.log("Retrieved value for field '" + fieldName + "' is '" + fieldValue + "'", "INFO", False)
         return fieldValue
 
