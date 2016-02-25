@@ -124,9 +124,9 @@ class T24WebDriver:
             expected_value = validation_values[idx]
 
             if field == '${TX_ID}':
-                actual_value = see_page.get_T24_field_value(field)
-            else:
                 actual_value = self.last_tx_id
+            else:
+                actual_value = see_page.get_T24_field_value(field)
 
             if op == ">>":
                 BuiltIn().set_test_variable("${" + expected_value.strip() + "}", actual_value)
