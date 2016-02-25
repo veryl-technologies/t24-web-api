@@ -4,7 +4,7 @@ import unittest
 import time
 
 
-class T24LoginPageTestCase(unittest.TestCase):
+class T24WebDriverTestCase(unittest.TestCase):
 
     def setUp(self):
         os.environ["PO_BASEURL"] = "http://7.117.75.57:9095"
