@@ -23,7 +23,7 @@ class utils:
 
     def get_unique_new_customer_mnemonic(self):
         base = datetime.datetime(2016, 2, 1, 00, 00)
-        secondsPassed = (datetime.datetime.now() - base).total_seconds()
+        secondsPassed = int((datetime.datetime.now() - base).total_seconds())
         code = self.num_to_short_alphanumeric(secondsPassed)
         result = code.rjust(8, 'Z')
         return result
