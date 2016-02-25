@@ -22,7 +22,7 @@ Scenario: Create and verify an account
     @{testDataFields}=    Create List    CUSTOMER=ABCL    CATEGORY=1002    CURRENCY=EUR
     Create Or Amend T24 Record    ACCOUNT    \    ${testDataFields}    \    ${EMPTY}
     Authorize T24 Record    ACCOUNT    ${TX_ID}    0
-    @{validationRules}=    Create List    ${TX_ID} >> MY_VAR    CATEGORY :EQ:= 1-002    CURRENCY :EQ:= EUR    ACCOUNT.OFFICER :EQ:= 1
+    @{validationRules}=    Create List    @ID >> MY_VAR    CATEGORY :EQ:= 1-002    CURRENCY :EQ:= EUR    ACCOUNT.OFFICER :EQ:= 1
     Check T24 Record    ACCOUNT    ${TX_ID}    ${validationRules}
 
 Scenario: Verify %CUSTOMER enquiry
