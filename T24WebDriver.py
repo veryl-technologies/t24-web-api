@@ -120,9 +120,13 @@ class T24WebDriver:
         # check for expected & actual result
         errors = []
         for idx, field in enumerate(validation_fields):
-            actual_value = see_page.get_T24_field_value(field)
             op = validation_operators[idx]
             expected_value = validation_values[idx]
+
+            if field == '${TX_ID}':
+                actual_value = see_page.get_T24_field_value(field)
+            else:
+                actual_value = self.last_tx_id
 
             if op == ">>":
                 BuiltIn().set_test_variable("${" + expected_value.strip() + "}", actual_value)
