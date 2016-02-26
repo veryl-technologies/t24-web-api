@@ -14,6 +14,15 @@ class T24WebDriverTestCase(unittest.TestCase):
         self.loginpage.open()
         self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
 
+    def test_input_customer(self):
+        inputPage = self.homePage.open_input_page_new_record("CUSTOMER,CORP")
+        inputPage.set_T24_field_value("MNEMONIC", "#AUTO")
+        inputPage.set_T24_field_value("NAME.1:1", "ALABALA")
+        inputPage.set_T24_field_value("SHORT.NAME", "SOMETHING")
+        inputPage.set_T24_field_value("SECTOR", "2001")
+        inputPage.click_commit_button();
+        self.homePage.sign_off()
+
     def test_enquiry(self):
         enqResultPage = self.homePage.open_t24_enquiry("AGENT.STATUS")
         id = enqResultPage.get_first_id_of_enquiry_result()

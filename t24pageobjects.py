@@ -2,6 +2,7 @@ from robotpageobjects import Page, robot_alias
 from robot.libraries.BuiltIn import BuiltIn
 from T24OperationType import T24OperationType
 from T24ExecutionContext import T24ExecutionContext
+from utils import BuiltinFunctions
 
 class T24Page(Page):
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
@@ -332,6 +333,10 @@ class T24RecordInputPage(T24Page):
     # Set a value in a text field, by specifying the underlying T24 field name
     @robot_alias("set_T24_field_value")
     def set_T24_field_value(self, fieldName, fieldText):
+
+        if fieldText.upper().startswith("#AUTO") and fieldName.upper() == "MNEMONIC":
+            fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
+
         self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
         self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
 
