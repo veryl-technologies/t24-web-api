@@ -340,6 +340,9 @@ class T24RecordInputPage(T24Page):
         self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
         self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
 
+        # wait for a reload (necessary after setting hot fields), but maybe do it only if the field is hot [hot="Y"]
+        self.wait_until_page_contains_element("css=img[alt=\"Commit the deal\"]")
+
         return self
 
     # Clicks the Commit Button When Dealing with T24 Transactions
