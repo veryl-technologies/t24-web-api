@@ -9,10 +9,10 @@ Scenario: Create and verify a coprorate customer
     [Documentation]    A sample customer test with I,A,S
     [Tags]    tag1    tag2
     T24 Login    INPUTTER
-    @{testDataFields}=    Create List    NAME.1:1=JOHN    SHORT.NAME=OLIVER    MNEMONIC=JOL75891    SECTOR=2001    STREET=LAKESHORE STREET
+    @{testDataFields}=    Create List    NAME.1:1=JOHN    SHORT.NAME:1=OLIVER    MNEMONIC=#AUTO-MNEMONIC    SECTOR=2001    STREET=LAKESHORE STREET
     Create Or Amend T24 Record    CUSTOMER,CORP    \    ${testDataFields}    \    ${EMPTY}
     Authorize T24 Record    CUSTOMER    ${TX_ID}    0
-    @{validationRules}=    Create List    CATEGORY :EQ:= 1-002    CURRENCY :EQ:= EUR    ACCOUNT.OFFICER :EQ:= 1
+    @{validationRules}=    Create List    STREET :EQ:= LAKESHORE STREET
     Check T24 Record    CUSTOMER    ${TX_ID}    ${validationRules}
 
 Scenario: Create and verify an account
