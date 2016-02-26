@@ -334,7 +334,8 @@ class T24RecordInputPage(T24Page):
     @robot_alias("set_T24_field_value")
     def set_T24_field_value(self, fieldName, fieldText):
 
-        if fieldText.upper().startswith("#AUTO") and fieldName.upper() == "MNEMONIC":
+        # TODO here we would support more field
+        if fieldText.upper().startswith("#AUTO"):
             fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
 
         self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
