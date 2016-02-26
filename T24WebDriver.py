@@ -74,7 +74,7 @@ class T24WebDriver:
         """
         self._make_sure_is_logged_in()
 
-        if record_id:
+        if record_id and not record_id.startswith(">>"):
             input_page = self.home_page.open_edit_page(app_version, record_id)
         else:
             input_page = self.home_page.open_input_page_new_record(app_version)
@@ -87,6 +87,9 @@ class T24WebDriver:
         self.last_input_id = input_page.get_id_from_completed_transaction()
         self.last_tx_id = self.last_input_id
         BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
+        if record_id.startswith(">>"):
+            BuiltIn().set_test_variable("${" + record_id[2:].strip() + "}", self.last_tx_id)
+
         input_page.close_window()
         self._make_home_page_default()
 
