@@ -338,6 +338,8 @@ class T24RecordInputPage(T24Page):
         if fieldText.upper().startswith("#AUTO"):
             fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
 
+        # if fieldName == "GENDER"
+
         self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
         self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
 
@@ -346,11 +348,30 @@ class T24RecordInputPage(T24Page):
 
         return self
 
-    # Clicks the Commit Button When Dealing with T24 Transactions
+    # Clicks the Commit Button when dealing with T24 transactions
     def click_commit_button(self):
         self._take_page_screenshot("VERBOSE")
 
+        self.wait_until_page_contains_element("css=img[alt=\"Commit the deal\"]", 3)
         self.click_element("css=img[alt=\"Commit the deal\"]")
+        return self
+
+    def is_accept_overrides_displayed(self):
+        try:
+            self.wait_until_page_contains_element("link=Accept Overrides", 3)
+            return True
+        except: # catch *all* exceptions
+            return False
+
+    # Clicks the Accept Overrides link (if available) when dealing with T24 transactions
+    def click_accept_overrides(self):
+        try:
+            self.wait_until_page_contains_element("link=Accept Overrides", 3)
+            self._take_page_screenshot("VERBOSE")
+            self.click_link("link=Accept Overrides")
+        except: # catch *all* exceptions
+            pass
+
         return self
 
     # Clicks the Authorize Button When Dealing with T24 Transactions

@@ -9,8 +9,9 @@ Scenario: Create and verify a coprorate customer
     [Documentation]    A sample customer test with I,A,S
     [Tags]    tag1    tag2
     T24 Login    INPUTTER
-    @{testDataFields}=    Create List    NAME.1:1=JOHN    SHORT.NAME:1=OLIVER    MNEMONIC=#AUTO-MNEMONIC    SECTOR=2001    STREET=LAKESHORE STREET
-    Create Or Amend T24 Record    CUSTOMER,CORP    \    ${testDataFields}    \    ${EMPTY}
+    @{testDataFields}=    Create List    NAME.1:1=DUP    MNEMONIC=#AUTO-MNEMONIC    SHORT.NAME:1=OLIVER    NATIONALITY=GR    RESIDENCE=GR
+    ...    LANGUAGE=1    STREET:1=LAKESHORE STREET    SECTOR=2001
+    Create Or Amend T24 Record    CUSTOMER    \    ${testDataFields}    Accept All    ${EMPTY}
     Authorize T24 Record    CUSTOMER    ${TX_ID}    0
     @{validationRules}=    Create List    STREET :EQ:= LAKESHORE STREET
     Check T24 Record    CUSTOMER    ${TX_ID}    ${validationRules}
@@ -20,10 +21,12 @@ Scenario: Create and verify an account
     [Tags]    tag1    tag2
     T24 Login    INPUTTER
     @{testDataFields}=    Create List    CUSTOMER=ABCL    CATEGORY=1002    CURRENCY=EUR
-    Create Or Amend T24 Record    ACCOUNT    \    ${testDataFields}    \    ${EMPTY}
+    Create Or Amend T24 Record    ACCOUNT    >> MY_VAR    ${testDataFields}    Accept All    Expect Any Error
     Authorize T24 Record    ACCOUNT    ${TX_ID}    0
-    @{validationRules}=    Create List    @ID >> MY_VAR    CATEGORY :EQ:= 1-002    CURRENCY :EQ:= EUR    ACCOUNT.OFFICER :EQ:= 1
+    @{validationRules}=    Create List    CATEGORY :EQ:= 1-002    CURRENCY :EQ:= EUR    ACCOUNT.OFFICER :EQ:= 1
     Check T24 Record    ACCOUNT    ${TX_ID}    ${validationRules}
+    @{testDataFields}=    Create List    CUSTOMER=${MY_VAR}    CATEGORY=1002    CURRENCY=EUR
+    Create Or Amend T24 Record    ACCOUNT    \    ${testDataFields}    \    ${EMPTY}
 
 Scenario: Verify %CUSTOMER enquiry
     [Documentation]    A sample test case with enquiry

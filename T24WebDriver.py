@@ -84,6 +84,12 @@ class T24WebDriver:
             input_page.set_T24_field_value(pair[0], pair[1])
 
         input_page.click_commit_button()
+
+        if oveerrides_handling == "Accept All":
+            if input_page.is_accept_overrides_displayed():
+                input_page.click_accept_overrides()
+                input_page.click_commit_button()
+
         self.last_input_id = input_page.get_id_from_completed_transaction()
         self.last_tx_id = self.last_input_id
         BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)

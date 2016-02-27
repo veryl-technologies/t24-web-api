@@ -15,19 +15,21 @@ class T24WebDriverTestCase(unittest.TestCase):
         self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
 
     def test_input_customer(self):
-        inputPage = self.homePage.open_input_page_new_record("CUSTOMER,CORP")
+        inputPage = self.homePage.open_input_page_new_record("CUSTOMER")
         inputPage.set_T24_field_value("MNEMONIC", "#AUTO")
         inputPage.set_T24_field_value("NAME.1:1", "ALABALA")
         inputPage.set_T24_field_value("SHORT.NAME:1", "SOMETHING")
         inputPage.set_T24_field_value("STREET:1", "SESAME STR")
         inputPage.set_T24_field_value("NATIONALITY", "GR")
         inputPage.set_T24_field_value("RESIDENCE", "GR")
+        inputPage.set_T24_field_value("LANGUAGE", "1")
         inputPage.set_T24_field_value("SECTOR", "2001")
         inputPage.click_commit_button()
-        id = inputPage.get_id_from_completed_transaction()
-        print "ID of created CUSTOMER record is " + id
+        inputPage.click_accept_overrides()
+        inputPage.click_commit_button()
+        # id = inputPage.get_id_from_completed_transaction()
+        # print "ID of created CUSTOMER record is " + id
         inputPage.close_window()
-
         self.homePage.sign_off()
 
     def test_enquiry(self):
