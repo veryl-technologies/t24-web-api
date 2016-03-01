@@ -3,6 +3,7 @@ from robot.libraries.BuiltIn import BuiltIn
 from T24OperationType import T24OperationType
 from T24ExecutionContext import T24ExecutionContext
 from utils import BuiltinFunctions
+from utils import Config
 
 class T24Page(Page):
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
@@ -296,8 +297,10 @@ class T24RecordSeePage(T24Page):
     def get_T24_field_value(self, fieldName):
         if fieldName == "ID" or fieldName == "@ID":
             fieldValue = self._get_text("xpath=.//*[@id='transactionId']")
-        else:
+        elif Config.get_t24_version() >= 14:
             fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
+        else:
+            fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../..//*[3]//*")
         self.log("Retrieved value for field '" + fieldName + "' is '" + fieldValue + "'", "INFO", False)
         return fieldValue
 

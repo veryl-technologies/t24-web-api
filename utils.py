@@ -1,4 +1,15 @@
 import datetime
+from robot.libraries.BuiltIn import BuiltIn
+
+class Config:
+
+    @staticmethod
+    def get_t24_version():
+        version = BuiltIn().get_variable_value("${T24_VERSION}")
+        if not version:
+            return 11
+        else:
+            return version
 
 class BuiltinFunctions:
  
@@ -7,6 +18,7 @@ class BuiltinFunctions:
 
     @staticmethod
     def num_to_short_alphanumeric(i):
+        # Note that there is no Z, which is used for other purposes
         chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXY'
         length = len(chars)
 
