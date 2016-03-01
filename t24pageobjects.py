@@ -330,6 +330,9 @@ class T24RecordInputPage(T24Page):
         transactionId = self._get_id_from_transaction_confirmation_text(confirmationMsg)
         return transactionId
 
+    def is_txt_complete_displayed(self):
+        return self._page_contains("Txn Complete")
+
     def _get_id_from_transaction_confirmation_text(self, confirmTransactionText):
         return confirmTransactionText.replace('Txn Complete:', '').strip().split(' ', 1)[0]
 
@@ -372,6 +375,7 @@ class T24RecordInputPage(T24Page):
             self.wait_until_page_contains_element("link=Accept Overrides", 3)
             self._take_page_screenshot("VERBOSE")
             self.click_link("link=Accept Overrides")
+            self.wait_until_page_does_not_contain("Accept Overrides")
         except: # catch *all* exceptions
             pass
 
