@@ -1,6 +1,5 @@
 *** Settings ***
 Documentation     Test suite that demonstrates the main functionalities of I,A,S,ENQ commands
-Test Teardown     Close Browsers
 Library           T24WebDriver.py
 Library           Selenium2Library    run_on_failure=Nothing
 
@@ -36,3 +35,20 @@ Scenario: Verify %CUSTOMER enquiry
     Execute T24 Enquiry    %CUSTOMER    ${enquiryConstraints}    Check Result    ${validationRules}
     @{validationRules}=    Create List    MNEMONIC :EQ:= ${CUST_MNEMONIC}
     Check T24 Record    CUSTOMER    ${CUST_ID}    ${validationRules}
+
+Demo
+    @{testDataFields}=    Create List    NAME.1:1=#AUTO-VALUE    SHORT.NAME:1=#AUTO-VALUE    MNEMONIC=#AUTO-VALUE    STREET:1=LAKESHORE STREET    NATIONALITY=US
+    ...    RESIDENCE=US    LANGUAGE=1    SECTOR=1001
+    Create Or Amend T24 Record    CUSTOMER    >>CUST1    ${testDataFields}    \    ${EMPTY}
+    Authorize T24 Record    CUSTOMER    ${CUST1}
+    @{testDataFields}=    Create List    CUSTOMER=${CUST1}    CATEGORY=1002    CURRENCY=USD
+    Create Or Amend T24 Record    ACCOUNT    >>AC1    ${testDataFields}    \    ${EMPTY}
+    Authorize T24 Record    ACCOUNT    ${AC1}
+    @{testDataFields}=    Create List    CUSTOMER=${CUST1}    CATEGORY=1002    CURRENCY=EUR
+    Create Or Amend T24 Record    ACCOUNT    >>AC2    ${testDataFields}    \    ${EMPTY}
+    Authorize T24 Record    ACCOUNT    ${AC2}
+    @{testDataFields}=    Create List    TRANSACTION.TYPE=AC    DEBIT.ACCT.NO=${AC1}    DEBIT.CURRENCY=USD    CREDIT.ACCT.NO=${AC2}    DEBIT.AMOUNT=10
+    Create Or Amend T24 Record    FUNDS.TRANSFER    >>FT1    ${testDataFields}    Accept All    ${EMPTY}
+    Authorize T24 Record    FUNDS.TRANSFER    ${FT1}
+    @{validationRules}=    Create List    WORKING.BALANCE :EQ:= 6.71
+    Check T24 Record    ACCOUNT    ${AC2}    ${validationRules}
