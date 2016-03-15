@@ -7,12 +7,33 @@ import time
 class T24WebDriverTestCase(unittest.TestCase):
 
     def setUp(self):
-        os.environ["PO_BASEURL"] = "http://7.117.75.57:9095"
+        os.environ["PO_BASEURL"] = "http://192.168.1.120:9095"
         os.environ["PO_BROWSER"] = "firefox"   # phantomjs
         
         self.loginpage = T24LoginPage()
         self.loginpage.open()
         self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
+
+    def test_input_customer_corp(self):
+        inputPage = self.homePage.open_input_page_new_record("CUSTOMER,CORP")
+        inputPage.set_T24_field_value("MNEMONIC", "#AUTO-MNEMONIC")
+        inputPage.set_T24_field_value("NAME.1:1", "DUP")
+        inputPage.set_T24_field_value("SHORT.NAME:1", "OLIVER")
+        inputPage.set_T24_field_value("SECTOR", "2001")
+        inputPage.set_T24_field_value("NATIONALITY", "GR")
+        inputPage.set_T24_field_value("RESIDENCE", "GR")
+        inputPage.set_T24_field_value("LANGUAGE", "1")
+        inputPage.set_T24_field_value("STREET:1", "SESAME STR")
+
+        inputPage.click_commit_button()
+
+        inputPage.click_accept_overrides()
+        inputPage.receive_documents()
+        inputPage.click_commit_button()
+        # id = inputPage.get_id_from_completed_transaction()
+        # print "ID of created CUSTOMER record is " + id
+        inputPage.close_window()
+        self.homePage.sign_off()
 
     def test_input_customer(self):
         inputPage = self.homePage.open_input_page_new_record("CUSTOMER")

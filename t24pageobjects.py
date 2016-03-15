@@ -381,6 +381,20 @@ class T24RecordInputPage(T24Page):
 
         return self
 
+    # Receive documents (if available) when dealing with T24 transactions
+    def receive_documents(self):
+        try:
+            self.wait_until_page_contains_element("xpath=//select[starts-with(@id,'warningChooser:Have you received')]", 3)
+            self._take_page_screenshot("VERBOSE")
+
+            for elementOption in self.find_elements("xpath=//select[starts-with(@id,'warningChooser:Have you received')]/option[@value='RECEIVED']"):
+                elementOption.click()
+
+        except: # catch *all* exceptions
+            pass
+
+        return self
+
     # Clicks the Authorize Button When Dealing with T24 Transactions
     def click_authorize_button(self):
         self.click_element("css=img[alt=\"Authorises a deal\"]")
