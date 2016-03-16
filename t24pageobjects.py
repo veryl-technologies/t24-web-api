@@ -1,5 +1,8 @@
+import time
 from robotpageobjects import Page, robot_alias
 from robot.libraries.BuiltIn import BuiltIn
+from selenium.webdriver.common.keys import Keys
+
 from T24OperationType import T24OperationType
 from T24ExecutionContext import T24ExecutionContext
 from utils import BuiltinFunctions
@@ -346,20 +349,40 @@ class T24RecordInputPage(T24Page):
 
         # if fieldName == "GENDER"
 
-        self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
-        self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
+        isHotField = self._is_hot_field(fieldName)
 
-        # wait for a reload (necessary after setting hot fields), but maybe do it only if the field is hot [hot="Y"]
-        self.wait_until_page_contains_element("css=img[alt=\"Commit the deal\"]")
+        self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
+        self.input_text(self._get_field_locator(fieldName), fieldText)
+
+        if isHotField:
+            self._leave_focus(fieldName)
+            time.sleep(1)
+            # wait for a reload (necessary after setting hot fields), but maybe do it only if the field is hot [hot="Y"]
+            self.wait_until_page_contains_element(self._get_commit_locator())
 
         return self
+
+    def _is_hot_field(self, fieldName):
+        element = self.find_element(self._get_field_locator(fieldName))
+        return element and element.get_attribute('hot') == 'Y'
+
+    def _leave_focus(self, fieldName):
+        element = self.find_element(self._get_field_locator(fieldName))
+        if element:
+            element.send_keys(Keys.TAB);
+
+    def _get_field_locator(self, fieldName):
+        return "css=input[name='fieldName:" + fieldName + "']"
+
+    def _get_commit_locator(self):
+        return "css=img[alt=\"Commit the deal\"]"
 
     # Clicks the Commit Button when dealing with T24 transactions
     def click_commit_button(self):
         self._take_page_screenshot("VERBOSE")
 
-        self.wait_until_page_contains_element("css=img[alt=\"Commit the deal\"]", 3)
-        self.click_element("css=img[alt=\"Commit the deal\"]")
+        self.wait_until_page_contains_element(self._get_commit_locator(), 3)
+        self.click_element(self._get_commit_locator())
         return self
 
     def is_accept_overrides_displayed(self):
