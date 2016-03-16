@@ -7,33 +7,32 @@ import time
 class T24WebDriverTestCase(unittest.TestCase):
 
     def setUp(self):
-        os.environ["PO_BASEURL"] = "http://192.168.1.120:9095"
+        os.environ["PO_BASEURL"] = "http://7.117.75.57:9095/"   # 192.168.1.120
         os.environ["PO_BROWSER"] = "firefox"   # phantomjs
         
         self.loginpage = T24LoginPage()
         self.loginpage.open()
         self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
 
-    def test_input_customer_corp(self):
-        inputPage = self.homePage.open_input_page_new_record("CUSTOMER,CORP")
+    def test_input_customer_complex(self):
+        inputPage = self.homePage.open_input_page_new_record("CUSTOMER")
         inputPage.set_T24_field_value("MNEMONIC", "#AUTO-MNEMONIC")
         inputPage.set_T24_field_value("NAME.1:1", "DUP")
         inputPage.set_T24_field_value("SHORT.NAME:1", "OLIVER")
-        inputPage.set_T24_field_value("SECTOR", "2001")
         inputPage.set_T24_field_value("NATIONALITY", "GR")
         inputPage.set_T24_field_value("RESIDENCE", "GR")
         inputPage.set_T24_field_value("LANGUAGE", "1")
         inputPage.set_T24_field_value("STREET:1", "SESAME STR")
+        inputPage.set_T24_field_value("SECTOR", "2001")  # TODO hot fields currently need to be at the end of the test
 
         inputPage.click_commit_button()
-
         inputPage.click_accept_overrides()
         inputPage.receive_documents()
         inputPage.click_commit_button()
-        # id = inputPage.get_id_from_completed_transaction()
-        # print "ID of created CUSTOMER record is " + id
+        new_id = inputPage.get_id_from_completed_transaction()
+        print "ID of created CUSTOMER record is " + new_id
         inputPage.close_window()
-        self.homePage.sign_off()
+        self.homePage.sign_off()   # sometimes this blows up
 
     def test_input_customer(self):
         inputPage = self.homePage.open_input_page_new_record("CUSTOMER")
@@ -91,8 +90,8 @@ class T24WebDriverTestCase(unittest.TestCase):
         # homePage._enter_t24_command("CUSTOMER S " + accountId)
         time.sleep(1)
 
-    def tearDown(self):
-        self.loginpage.close()
+#    def tearDown(self):
+#        self.loginpage.close()
 
 if __name__ == "__main__":
     unittest.main()
