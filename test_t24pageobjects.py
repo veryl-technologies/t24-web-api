@@ -9,17 +9,28 @@ class T24WebDriverTestCase(unittest.TestCase):
     def setUp(self):
         os.environ["PO_BASEURL"] = "http://192.168.1.120:9095" # "http://7.117.75.57:9095/"   # 192.168.1.120
         os.environ["PO_BROWSER"] = "firefox"   # phantomjs
-        
+
         self.loginpage = T24LoginPage()
         self.loginpage.open()
-        self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
+        # self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
+        self.homePage = self.loginpage.enter_T24_credentials("TELLER1", "123456")
+
+    def test_teller(self):
+        inputPage = self.homePage.open_input_page_new_record("TELLER,LCY.CASHIN")
+        # inputPage.set_T24_field_value("TELLER.ID", "1510")
+        inputPage.set_T24_field_value("AMOUNT.LOCAL.1:1", "5")
+        inputPage.set_T24_field_value("ACCOUNT.2", "USD140280001")
+        inputPage.set_T24_field_value("DR.UNIT:5", "1")
+        inputPage.click_commit_button()
+        self.homePage.sign_off()
+        self.homePage.close()  # TODO - Find out how to close the popup with print dialog
 
     def test_input_customer_complex(self):
         inputPage = self.homePage.open_input_page_new_record("CUSTOMER,CORP")
         inputPage.set_T24_field_value("MNEMONIC", "#AUTO-MNEMONIC")
         inputPage.set_T24_field_value("NAME.1:1", "DUP")
         inputPage.set_T24_field_value("SHORT.NAME:1", "OLIVER")
-        inputPage.set_T24_field_value("SECTOR", "2001")  # TODO hot fields currently need to be at the end of the test
+        inputPage.set_T24_field_value("SECTOR", "2001")
         inputPage.set_T24_field_value("NATIONALITY", "GR")
         inputPage.set_T24_field_value("RESIDENCE", "GR")
         inputPage.set_T24_field_value("LANGUAGE", "1")
@@ -89,7 +100,7 @@ class T24WebDriverTestCase(unittest.TestCase):
 
         # homePage._enter_t24_command("CUSTOMER S " + accountId)
         time.sleep(1)
-    
+
 #    def tearDown(self):
 #        self.loginpage.close()
 

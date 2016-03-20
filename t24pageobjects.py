@@ -1,4 +1,5 @@
 import time
+
 from robotpageobjects import Page, robot_alias
 from robot.libraries.BuiltIn import BuiltIn
 from selenium.webdriver.common.keys import Keys
@@ -114,8 +115,10 @@ class T24HomePage(T24Page):
     # Inheritable dictionary mapping human-readable names to Selenium2Library locators.
     # You can then pass in the keys to Selenium2Library actions instead of the locator strings.
     selectors = {
-        "banner frame": "xpath=//frame[contains(@id,'banner')]",
+        "banner frame": "xpath=//frame[contains(@id,'banner') or contains(@id,'USER')]",
+        "banner frame user": "xpath=//frame[contains(@id,'USER')]",
         "command line": "css=input[name='commandValue']",
+        "frame tab": "xpath=//frame[contains(@id,'FRAMETAB')]",
     }
 
     @robot_alias("sign_off")
@@ -138,17 +141,31 @@ class T24HomePage(T24Page):
         self.log("Executing command '" + text.strip() + "' ...", "INFO", False)
 
         self.select_window()
+
+        isCos = self._is_cos()
+
         self.select_frame(self.selectors["banner frame"])
 
         self.wait_until_page_contains_element(self.selectors["command line"])
         self.input_text(self.selectors["command line"], text + "\n")
         self._take_page_screenshot("VERBOSE")
 
-        self.select_window("new")
+        if isCos:
+            self.unselect_frame()
+            self.select_frame(self.selectors["frame tab"])
+        else:
+            self.select_window("new")
+
         self._take_page_screenshot("VERBOSE")
 
         # We always return something from a page object, even if it's the same page object instance we are currently on.
         return self
+
+    def _is_cos(self):
+        try:
+            return self.find_element(self.selectors["banner frame user"], False, 0) != None
+        except:
+            return False
 
     def _make_sure_home_page_is_active(self):
         if not isinstance(self._get_current_page(), T24HomePage):
@@ -382,6 +399,7 @@ class T24RecordInputPage(T24Page):
         self._take_page_screenshot("VERBOSE")
 
         self.wait_until_page_contains_element(self._get_commit_locator(), 3)
+
         self.click_element(self._get_commit_locator())
         return self
 
