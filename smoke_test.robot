@@ -52,3 +52,7 @@ Demo
     Authorize T24 Record    FUNDS.TRANSFER    ${FT1}
     @{validationRules}=    Create List    WORKING.BALANCE :EQ:= 6.71
     Check T24 Record    ACCOUNT    ${AC2}    ${validationRules}
+
+Scenario: Simple Funds Transfer
+    @{testDataFields}=    Create List    TRANSACTION.TYPE=AC    DEBIT.ACCT.NO=50733    DEBIT.CURRENCY=USD    CREDIT.ACCT.NO=50741    DEBIT.AMOUNT=10
+    Create Or Amend T24 Record    FUNDS.TRANSFER    >>FT1    ${testDataFields}    Accept All    ${EMPTY}
