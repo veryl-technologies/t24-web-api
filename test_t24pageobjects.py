@@ -7,12 +7,28 @@ import time
 class T24WebDriverTestCase(unittest.TestCase):
 
     def setUp(self):
-        os.environ["PO_BASEURL"] = "http://7.117.75.57:9095/"   # 192.168.1.120
+        os.environ["PO_BASEURL"] = "http://192.168.242.128:9095/"   # 192.168.1.120
         os.environ["PO_BROWSER"] = "firefox"   # phantomjs
         
         self.loginpage = T24LoginPage()
         self.loginpage.open()
         self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
+
+    def test_ft(self):
+        inputPage = self.homePage.open_input_page_new_record("FUNDS.TRANSFER")
+        inputPage.set_T24_field_value("TRANSACTION.TYPE", "AC")
+        inputPage.set_T24_field_value("DEBIT.ACCT.NO", "50733")
+        inputPage.set_T24_field_value("DEBIT.CURRENCY", "USD")
+        inputPage.set_T24_field_value("CREDIT.ACCT.NO", "50741")
+        inputPage.set_T24_field_value("DEBIT.AMOUNT", "10")
+
+        inputPage.click_commit_button()
+        inputPage.click_accept_overrides()
+        inputPage.click_commit_button()
+        new_id = inputPage.get_id_from_completed_transaction()
+        print "ID of created FT record is " + new_id
+        inputPage.close_window()
+        self.homePage.sign_off()   # sometimes this blows up
 
     def test_input_customer_complex(self):
         inputPage = self.homePage.open_input_page_new_record("CUSTOMER")
