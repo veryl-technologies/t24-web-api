@@ -4,6 +4,10 @@ from T24OperationType import T24OperationType
 from T24ExecutionContext import T24ExecutionContext
 from utils import BuiltinFunctions
 from utils import Config
+from datetime import datetime
+import time
+import sys
+
 
 class T24Page(Page):
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
@@ -372,14 +376,41 @@ class T24RecordInputPage(T24Page):
     # Clicks the Accept Overrides link (if available) when dealing with T24 transactions
     def click_accept_overrides(self):
         try:
-            self.wait_until_page_contains_element("link=Accept Overrides", 3)
+            start = datetime.now()
+            self.log("Waiting for Accept Overrides link to appear... ")
+            self.wait_until_page_contains_element("link=Accept Overrides", 10)
+            self.log("Accept Overrides link found in " + str(int((datetime.now() - start).total_seconds())) + " seconds")
+
             self._take_page_screenshot("VERBOSE")
+
             self.click_link("link=Accept Overrides")
-            self.wait_until_page_does_not_contain("Accept Overrides")
-        except: # catch *all* exceptions
+
+            # The fastest way to search for completing of operation is just to look in the page source
+            # We could also use self.wait_until_page_does_not_contain or wait_until_page_does_not_contain_element,
+            # but need to temporarily reduce 'selenium_implicit_wait' from 10 to something quite smaller (e.g. 0.1)
+            start = datetime.now()
+            self.log("Waiting for completion of accepting overrides...")
+            err = self._wait_until_page_source_does_not_contain("Accept Overrides", 10)
+            if err is None:
+                self.log("Completed processing of 'Accept Overrides' in " +
+                     str(int((datetime.now() - start).total_seconds())) + " seconds")
+            else:
+                self.log(err)
+        except:  # catch *all* exceptions
+            e = sys.exc_info()[0]
+            self.log("Warning: " + str(e))
             pass
 
         return self
+
+    def _wait_until_page_source_does_not_contain(self, text, timeout=None, error=None):
+        def check_present_src():
+            present = self.get_source().find(text) > -1
+            if not present:
+                return
+            else:
+                return error or "Text '%s' not found in %s" % (text, self._format_timeout(timeout))
+        self._wait_until_no_error(timeout, check_present_src)
 
     # Receive documents (if available) when dealing with T24 transactions
     def receive_documents(self):
