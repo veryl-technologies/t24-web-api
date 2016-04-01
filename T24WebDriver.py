@@ -176,9 +176,22 @@ class T24WebDriver:
             fld, op, val = self._parse_validation_rule(v)
             validation_fields.append(fld)
             validation_operators.append(op)
-            validation_values.append(val)
+            validation_values.append(self._process_validation_value(val))
 
         return validation_fields, validation_operators, validation_values
+
+    def _process_validation_value(self, val):
+        if val.startswith("#"):
+            val = self._evaluate_expression(val[1:])
+        return val
+
+    def _evaluate_expression(self, expr):
+        # NOTE For a safer alternative to eval() see ast.literal_eval()
+        # http://stackoverflow.com/questions/15197673/using-pythons-eval-vs-ast-literal-eval
+        self._log_info("Evaluating expression '" + expr + "' ...")
+        res = str(eval(expr))  # syntax for imports is eval("__import__('datetime').datetime.now()")
+        self._log_info("The result of expression evaluation is '" + res + "'")
+        return res
 
     def _parse_validation_rule(self, validation_rule):
         validation_rule = self._normalize_filter(validation_rule)
