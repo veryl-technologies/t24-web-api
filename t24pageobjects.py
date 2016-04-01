@@ -1,5 +1,9 @@
+import time
+
 from robotpageobjects import Page, robot_alias
 from robot.libraries.BuiltIn import BuiltIn
+from selenium.webdriver.common.keys import Keys
+
 from T24OperationType import T24OperationType
 from T24ExecutionContext import T24ExecutionContext
 from utils import BuiltinFunctions
@@ -115,8 +119,10 @@ class T24HomePage(T24Page):
     # Inheritable dictionary mapping human-readable names to Selenium2Library locators.
     # You can then pass in the keys to Selenium2Library actions instead of the locator strings.
     selectors = {
-        "banner frame": "xpath=//frame[contains(@id,'banner')]",
+        "banner frame": "xpath=//frame[contains(@id,'banner') or contains(@id,'USER')]",
+        "banner frame user": "xpath=//frame[contains(@id,'USER')]",
         "command line": "css=input[name='commandValue']",
+        "frame tab": "xpath=//frame[contains(@id,'FRAMETAB')]",
     }
 
     @robot_alias("sign_off")
@@ -139,17 +145,31 @@ class T24HomePage(T24Page):
         self.log("Executing command '" + text.strip() + "' ...", "INFO", False)
 
         self.select_window()
+
+        isCos = self._is_cos()
+
         self.select_frame(self.selectors["banner frame"])
 
         self.wait_until_page_contains_element(self.selectors["command line"])
         self.input_text(self.selectors["command line"], text + "\n")
         self._take_page_screenshot("VERBOSE")
 
-        self.select_window("new")
+        if isCos:
+            self.unselect_frame()
+            self.select_frame(self.selectors["frame tab"])
+        else:
+            self.select_window("new")
+
         self._take_page_screenshot("VERBOSE")
 
         # We always return something from a page object, even if it's the same page object instance we are currently on.
         return self
+
+    def _is_cos(self):
+        try:
+            return self.find_element(self.selectors["banner frame user"], False, 0) != None
+        except:
+            return False
 
     def _make_sure_home_page_is_active(self):
         if not isinstance(self._get_current_page(), T24HomePage):
@@ -350,20 +370,41 @@ class T24RecordInputPage(T24Page):
 
         # if fieldName == "GENDER"
 
-        self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
-        self.input_text("css=input[name='fieldName:" + fieldName + "']", fieldText)
+        isHotField = self._is_hot_field(fieldName)
 
-        # wait for a reload (necessary after setting hot fields), but maybe do it only if the field is hot [hot="Y"]
-        self.wait_until_page_contains_element("css=img[alt=\"Commit the deal\"]")
+        self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
+        self.input_text(self._get_field_locator(fieldName), fieldText)
+
+        if isHotField:
+            self._leave_focus(fieldName)
+            time.sleep(1)
+            # wait for a reload (necessary after setting hot fields), but maybe do it only if the field is hot [hot="Y"]
+            self.wait_until_page_contains_element(self._get_commit_locator())
 
         return self
+
+    def _is_hot_field(self, fieldName):
+        element = self.find_element(self._get_field_locator(fieldName))
+        return element and element.get_attribute('hot') == 'Y'
+
+    def _leave_focus(self, fieldName):
+        element = self.find_element(self._get_field_locator(fieldName))
+        if element:
+            element.send_keys(Keys.TAB);
+
+    def _get_field_locator(self, fieldName):
+        return "css=input[name='fieldName:" + fieldName + "']"
+
+    def _get_commit_locator(self):
+        return "css=img[alt=\"Commit the deal\"]"
 
     # Clicks the Commit Button when dealing with T24 transactions
     def click_commit_button(self):
         self._take_page_screenshot("VERBOSE")
 
-        self.wait_until_page_contains_element("css=img[alt=\"Commit the deal\"]", 3)
-        self.click_element("css=img[alt=\"Commit the deal\"]")
+        self.wait_until_page_contains_element(self._get_commit_locator(), 3)
+
+        self.click_element(self._get_commit_locator())
         return self
 
     def is_accept_overrides_displayed(self):
