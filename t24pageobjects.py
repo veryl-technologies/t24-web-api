@@ -360,15 +360,24 @@ class T24RecordInputPage(T24Page):
     def _get_id_from_transaction_confirmation_text(self, confirmTransactionText):
         return confirmTransactionText.replace('Txn Complete:', '').strip().split(' ', 1)[0]
 
+    def _evaluate_expression(self, expr):
+        # NOTE For a safer alternative to eval() see ast.literal_eval()
+        # http://stackoverflow.com/questions/15197673/using-pythons-eval-vs-ast-literal-eval
+        self.log("Evaluating expression '" + expr + "' ...", "INFO", False)
+        res = str(eval(expr))  # syntax for imports is eval("__import__('datetime').datetime.now()")
+        self.log("The result of expression evaluation is '" + res + "'", "INFO", False)
+        return res
+
     # Set a value in a text field, by specifying the underlying T24 field name
     @robot_alias("set_T24_field_value")
     def set_T24_field_value(self, fieldName, fieldText):
 
-        # TODO here we would support more field
         if fieldText.upper().startswith("#AUTO"):
             fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
+        elif fieldText.startswith("#"):
+            fieldText = self._evaluate_expression(fieldText[1:])
 
-        # if fieldName == "GENDER"
+        # TODO handle radiobuttons like "GENDER" in CUSTOMER
 
         isHotField = self._is_hot_field(fieldName)
 
