@@ -380,6 +380,7 @@ class T24RecordInputPage(T24Page):
         # TODO handle radiobuttons like "GENDER" in CUSTOMER
 
         isHotField = self._is_hot_field(fieldName)
+        isAutoLaunchEnquiry = not isHotField and self._is_auto_launch_enquiry(fieldName)
 
         self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
         self.input_text(self._get_field_locator(fieldName), fieldText)
@@ -389,12 +390,29 @@ class T24RecordInputPage(T24Page):
             time.sleep(1)
             # wait for a reload (necessary after setting hot fields), but maybe do it only if the field is hot [hot="Y"]
             self.wait_until_page_contains_element(self._get_commit_locator())
+        elif isAutoLaunchEnquiry:
+            windowsCount = len(self.get_window_names())
+            self._leave_focus(fieldName)
+            time.sleep(1)
+
+            newWindowNames = self.get_window_names()
+
+            while len(newWindowNames) > windowsCount:
+                self.select_window(newWindowNames[len(newWindowNames) - 1])
+                self.close_window()
+                newWindowNames = self.get_window_names()
+
+            self.select_window(newWindowNames[len(newWindowNames) - 1])
 
         return self
 
     def _is_hot_field(self, fieldName):
         element = self.find_element(self._get_field_locator(fieldName))
         return element and element.get_attribute('hot') == 'Y'
+
+    def _is_auto_launch_enquiry(self, fieldName):
+        element = self.find_element(self._get_field_locator(fieldName))
+        return element and element.get_attribute('autoenqname') and len(element.get_attribute('autoenqname')) > 1
 
     def _leave_focus(self, fieldName):
         element = self.find_element(self._get_field_locator(fieldName))
