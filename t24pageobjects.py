@@ -1,6 +1,6 @@
 import time
 
-from robotpageobjects import Page, robot_alias
+from pageObjects import Page, robot_alias
 from robot.libraries.BuiltIn import BuiltIn
 from selenium.webdriver.common.keys import Keys
 
