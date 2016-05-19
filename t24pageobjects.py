@@ -377,50 +377,41 @@ class T24RecordInputPage(T24Page):
         elif fieldText.startswith("#"):
             fieldText = self._evaluate_expression(fieldText[1:])
 
-        # TODO handle radiobuttons like "GENDER" in CUSTOMER
-
-        isHotField = self._is_hot_field(fieldName)
-        isAutoLaunchEnquiry = not isHotField and self._is_auto_launch_enquiry(fieldName)
-
         self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
-        self.input_text(self._get_field_locator(fieldName), fieldText)
 
-        if isHotField:
-            self._leave_focus(fieldName)
-            time.sleep(1)
-            # wait for a reload (necessary after setting hot fields), but maybe do it only if the field is hot [hot="Y"]
-            self.wait_until_page_contains_element(self._get_commit_locator())
-        elif isAutoLaunchEnquiry:
-            windowsCount = len(self.get_window_names())
-            self._leave_focus(fieldName)
-            time.sleep(1)
+        fieldCtrl = self._get_field_ctrl(fieldName)
 
-            newWindowNames = self.get_window_names()
-
-            while len(newWindowNames) > windowsCount:
-                self.select_window(newWindowNames[len(newWindowNames) - 1])
-                self.close_window()
-                newWindowNames = self.get_window_names()
-
-            self.select_window(newWindowNames[len(newWindowNames) - 1])
+        fieldCtrl.set_text(fieldText)
 
         return self
 
-    def _is_hot_field(self, fieldName):
-        element = self.find_element(self._get_field_locator(fieldName))
-        return element and element.get_attribute('hot') == 'Y'
+    def _get_field_ctrl(self, fieldName):
+        waitTimeBetweenRetries = 1
+        maxRetries = 10
 
-    def _is_auto_launch_enquiry(self, fieldName):
-        element = self.find_element(self._get_field_locator(fieldName))
-        return element and element.get_attribute('autoenqname') and len(element.get_attribute('autoenqname')) > 1
+        while maxRetries > 0:
+            maxRetries -= 1
 
-    def _leave_focus(self, fieldName):
-        element = self.find_element(self._get_field_locator(fieldName))
-        if element:
-            element.send_keys(Keys.TAB);
+            try:
+                element = self.find_element(T24InputFieldCtrl.get_locator(fieldName), False, 0)
+                if element and element.is_displayed():
+                    return T24InputFieldCtrl(self, fieldName, element)
+            except:
+                pass
 
-    def _get_field_locator(self, fieldName):
-        return "css=input[name='fieldName:" + fieldName + "']"
+            try:
+                element = self.find_element(T24SelectFieldCtrl.get_locator(fieldName), False, 0)
+                if element:
+                    return T24SelectFieldCtrl(self, fieldName, element)
+            except:
+                pass
+
+            try:
+                elements = self.find_elements(T24RadioFieldCtrl.get_locator(fieldName), False, waitTimeBetweenRetries)
+                if elements:
+                    return T24RadioFieldCtrl(self, fieldName, elements)
+            except:
+                pass
 
     def _get_commit_locator(self):
         return "css=img[alt=\"Commit the deal\"]"
@@ -498,3 +489,91 @@ class T24RecordInputPage(T24Page):
     def click_authorize_button(self):
         self.click_element("css=img[alt=\"Authorises a deal\"]")
         return self
+
+class T24FieldCtrl:
+    def __init__(self, page, fieldName, element):
+        self.page = page
+        self.fieldName = fieldName
+        self.element = element
+
+    def set_text(self, fieldText):
+        isHotField = self._is_hot_field()
+        isAutoLaunchEnquiry = not isHotField and self._is_auto_launch_enquiry()
+
+        self.set_control_text(fieldText)
+
+        if isHotField:
+            self._leave_focus()
+            time.sleep(1)
+            # wait for a reload (necessary after setting hot fields), but maybe do it only if the field is hot [hot="Y"]
+            self.page.wait_until_page_contains_element(self.page._get_commit_locator())
+        elif isAutoLaunchEnquiry:
+            windowsCount = len(self.page.get_window_names())
+            self._leave_focus()
+            time.sleep(1)
+
+            newWindowNames = self.page.get_window_names()
+
+            while len(newWindowNames) > windowsCount:
+                self.page.select_window(newWindowNames[len(newWindowNames) - 1])
+                self.page.close_window()
+                newWindowNames = self.page.get_window_names()
+
+            self.page.select_window(newWindowNames[len(newWindowNames) - 1])
+
+        return self
+
+    def _is_hot_field(self):
+        return self.element and self.element.get_attribute('hot') == 'Y'
+
+    def _is_auto_launch_enquiry(self):
+        return self.element and self.element.get_attribute('autoenqname') and len(self.element.get_attribute('autoenqname')) > 1
+
+    def _leave_focus(self):
+        if self.element:
+            self.element.send_keys(Keys.TAB);
+
+class T24InputFieldCtrl(T24FieldCtrl):
+    def __init__(self, page, fieldName, element):
+        T24FieldCtrl.__init__(self, page, fieldName, element)
+
+    @staticmethod
+    def get_locator(fieldName):
+        return "css=input[name='fieldName:" + fieldName + "']"
+
+    def set_control_text(self, fieldText):
+        self.page.input_text(self.get_locator(self.fieldName), fieldText)
+
+class T24SelectFieldCtrl(T24FieldCtrl):
+    def __init__(self, page, fieldName, element):
+        T24FieldCtrl.__init__(self, page, fieldName, element)
+
+    @staticmethod
+    def get_locator(fieldName):
+        return "css=select[name='fieldName:" + fieldName + "']"
+
+    def set_control_text(self, fieldText):
+        self.page.select_from_list(self.get_locator(self.fieldName), fieldText)
+
+class T24RadioFieldCtrl(T24FieldCtrl):
+    def __init__(self, page, fieldName, elements):
+        T24FieldCtrl.__init__(self, page, fieldName, elements[0])
+        self.elements = elements
+
+    @staticmethod
+    def get_locator(fieldName):
+        return "css=input[name='radio:mainTab:" + fieldName + "']"
+
+    def set_control_text(self, fieldText):
+        for elem in self.elements:
+            val = elem.get_attribute("value")
+            if val == fieldText or self._get_ratio_text(val) == fieldText:
+                elem.click()
+
+    def _get_ratio_text(self, radioInputValue):
+        try:
+            locator = "css=input[name='radio:mainTab:" + self.fieldName + "'][value='" + radioInputValue + "'] + span"
+            elem = self.page.find_element(locator)
+            return elem.get_attribute("innerText")
+        except:
+            return ""
