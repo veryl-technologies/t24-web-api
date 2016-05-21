@@ -95,10 +95,16 @@ class T24WebDriver:
         self.last_tx_id = self.last_input_id
         BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
         if record_id.startswith(">>"):
-            BuiltIn().set_test_variable("${" + record_id[2:].strip() + "}", self.last_tx_id)
+            self._set_variable(record_id[2:].strip(), self.last_tx_id)
 
         input_page.close_window()
         self._make_home_page_default()
+
+    def _set_variable(self, name, value):
+        if name.startswith("g.") or name.startswith("global."):
+            BuiltIn().set_global_variable("${" + name + "}", value)
+        else:
+            BuiltIn().set_test_variable("${" + name + "}", value)
 
     def _make_home_page_default(self):
         T24ExecutionContext.Instance().set_current_page(self.home_page)
@@ -139,7 +145,7 @@ class T24WebDriver:
                 actual_value = see_page.get_T24_field_value(field)
 
             if op == ">>":
-                BuiltIn().set_test_variable("${" + expected_value.strip() + "}", actual_value)
+                self._set_variable(expected_value.strip(), actual_value)
             else:
                 if op == "EQ" and expected_value != actual_value:
                     errors.append("Field '" + field + "' has expected value '" + expected_value + "' but the actual value is '" + actual_value + "'")
@@ -243,7 +249,7 @@ class T24WebDriver:
             # need to save data into RF variables
             for i, c in enumerate(enq_res_columns):
                 if validation_operators[i] == ">>":
-                    BuiltIn().set_test_variable("${" + validation_values[i].strip() + "}", values[i])
+                    self._set_variable(validation_values[i].strip(), values[i])
 
             # verify the results
             errors = []
