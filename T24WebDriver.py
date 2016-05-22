@@ -1,6 +1,10 @@
+
 from t24pageobjects import T24LoginPage
 from T24ExecutionContext import T24ExecutionContext
 from robot.libraries.BuiltIn import BuiltIn
+
+from utils import VariablesExporter
+
 
 class T24WebDriver:
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
@@ -103,6 +107,7 @@ class T24WebDriver:
     def _set_variable(self, name, value):
         if name.startswith("g.") or name.startswith("global."):
             BuiltIn().set_global_variable("${" + name + "}", value)
+            VariablesExporter().add(name, value)
         else:
             BuiltIn().set_test_variable("${" + name + "}", value)
 
@@ -271,6 +276,7 @@ class T24WebDriver:
             # fail if there are any validation errors
             if errors:
                 BuiltIn().fail("\n".join(errors))
+
         else:
             raise NotImplementedError("Not implemented execution actions on enquiry results. Can't apply action " + action)
 
@@ -289,3 +295,5 @@ class T24WebDriver:
         if self.login_page:
             self.login_page.close_all_browsers()
             self.login_page = None
+
+
