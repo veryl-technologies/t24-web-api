@@ -40,49 +40,55 @@ class BuiltinFunctions:
         result = code.rjust(8, 'Z')
         return result
 
-class VariablesExporter():
+
+class VariablesExporter:
     def add(self, name, value):
         try:
-            outputFile = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE}")
-            if outputFile and len(outputFile) > 0:
-                outputFileCreated = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}")
-                if not outputFileCreated or len(outputFileCreated) <= 0:
-                    self._create_output_file(outputFile)
-                    BuiltIn().set_global_variable("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}", outputFile)
-                    outputFileCreated = outputFile
+            output_file = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE}")
+            if output_file and len(output_file) > 0:
+                output_file_created = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}")
+                if not output_file_created or len(output_file_created) <= 0:
+                    self._create_output_file(output_file)
+                    BuiltIn().set_global_variable("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}", output_file)
+                    output_file_created = output_file  # TODO maybe the opposite assignment?
 
-                self._add_variable(outputFile, name, value)
+                self._add_variable(output_file, name, value)
         except:
-            pass
+            pass  # TODO why not just let the exception?
 
-    def _add_variable(self, outputFile, name, value):
-        with open(outputFile,"rb+") as f:
+    @staticmethod
+    def _add_variable(output_file, name, value):
+        with open(output_file, "rb+") as f:
             # remove the last character '}'
             f.seek(-1, os.SEEK_END)
             f.truncate()
             f.write("\r\n")
-            f.write("            \"" + name + "\": " + self._format_value(value) + ",}")
+            f.write("            \"" + name + "\": " + VariablesExporter._format_value(value) + ",}")
 
-    def _format_value(self, value):
+    @staticmethod
+    def _format_value(value):
         if value == "True" or value == "False" or str(value).isdigit():
             return value
         else:
             return "\"" + value + "\""
 
-    def _create_output_file(self, outputFile):
-        self._assure_directory_exists(outputFile)
+    @staticmethod
+    def _create_output_file(outputFile):
+        VariablesExporter._assure_directory_exists(outputFile)
 
         if os.path.isfile(outputFile):
-            os.rename(outputFile, self._get_history_file_name(outputFile))
+            os.rename(outputFile, VariablesExporter._get_history_file_name(outputFile))
 
-        with open(outputFile,"w+") as f:
+        with open(outputFile, "w+") as f:
             f.write("def get_variables():\r\n")
             f.write("    return {}")
 
-    def _assure_directory_exists(self, f):
+    @staticmethod
+    def _assure_directory_exists(f):
         d = os.path.dirname(f)
         if not os.path.exists(d):
             os.makedirs(d)
 
-    def _get_history_file_name(self, fileName):
+    @staticmethod
+    def _get_history_file_name(fileName):
         return fileName + time.strftime('%Y-%m-%d-%H-%M-%S', time.gmtime(os.path.getmtime(fileName)))
