@@ -2,8 +2,8 @@
 from t24pageobjects import T24LoginPage
 from T24ExecutionContext import T24ExecutionContext
 from robot.libraries.BuiltIn import BuiltIn
-
 from utils import VariablesExporter
+import fnmatch
 
 
 class T24WebDriver:
@@ -152,13 +152,7 @@ class T24WebDriver:
             if op == ">>":
                 self._set_variable(expected_value.strip(), actual_value)
             else:
-                if op == "EQ" and expected_value != actual_value:
-                    errors.append("Field '" + field + "' has expected value '" + expected_value + "' but the actual value is '" + actual_value + "'")
-                elif op == "LK" and expected_value not in actual_value:
-                    errors.append("Field '" + field + "' has expected value '" + expected_value + "' that is not part of the actual value '" + actual_value + "'")
-                else:
-                    self._log_info("For field '" + field + "' verified that the actual value '" + actual_value + "' " +
-                                   self._get_operator_friendly_name(op) + " the expected value '" + expected_value + "'")
+                self._validate_field_value(field, op, expected_value, actual_value, errors)
 
         # go back to home screen
         see_page.close_window()
@@ -173,7 +167,13 @@ class T24WebDriver:
         if op == "EQ":
             return "equals"
         elif op == "LK":
+            return "matches"
+        elif op == "CT":
             return "contains"
+        elif op == "BW":
+            return "begins with"
+        elif op == "EW":
+            return "starts with"
         else:
             return op
 
@@ -207,14 +207,10 @@ class T24WebDriver:
     def _parse_validation_rule(self, validation_rule):
         validation_rule = self._normalize_filter(validation_rule)
 
-        if " EQ " in validation_rule:
-            return self._get_validation_rule_parts(validation_rule, " EQ ")
-
-        if " LK " in validation_rule:
-            return self._get_validation_rule_parts(validation_rule, " LK ")
-
-        if " >> " in validation_rule:
-            return self._get_validation_rule_parts(validation_rule, " >> ")
+        for op in ["EQ", "LK", "CT", "BW", "EW", ">>"]:
+            op_spaces = " " + op + " "
+            if op_spaces in validation_rule:
+                return self._get_validation_rule_parts(validation_rule, op_spaces)
 
         raise NotImplementedError("Unexpected text for filter/validation: '" + validation_rule + "'")
 
@@ -260,18 +256,8 @@ class T24WebDriver:
             errors = []
             for idx, column in enumerate(enq_res_columns):
                 op = validation_operators[idx]
-                if op == ">>":
-                    continue
-
-                actual_value = values[idx]
-                expected_value = validation_values[idx]
-                if op == "EQ" and expected_value != actual_value:
-                    errors.append("Column '" + column + "' has expected value '" + expected_value + "' but the actual value is '" + actual_value + "'")
-                elif op == "LK" and expected_value not in actual_value:
-                    errors.append("Column '" + column + "' has expected value '" + expected_value + "' that is not part of the actual value '" + actual_value + "'")
-                else:
-                    self._log_info("For column '" + column + "' verified that the actual value '" + actual_value + "' " +
-                                   self._get_operator_friendly_name(op) + " the expected value '" + expected_value + "'")
+                if op != ">>":
+                    self._validate_field_value(column, op, validation_values[idx], values[idx], errors)
 
             # fail if there are any validation errors
             if errors:
@@ -283,6 +269,27 @@ class T24WebDriver:
         # go back to home screen
         enq_res_page.close_window()
         self._make_home_page_default()
+
+    def _validate_field_value(self, column, op, expected_value, actual_value, errors):
+        if op == "EQ" and expected_value != actual_value:
+            errors.append(
+                "Field '" + column + "' has expected value '" + expected_value + "' but the actual value is '" + actual_value + "'")
+        elif op == "LK" and not self._is_match_LK(actual_value, expected_value):
+            errors.append(
+                "Field '" + column + "' is expected to match pattern '" + expected_value + "' but the actual value '" + actual_value + "' is not a match")
+        elif op == "CT" and expected_value not in actual_value:
+            errors.append(
+                "Field '" + column + "' is expected to contain value '" + expected_value + "' but it is not a part of the actual value '" + actual_value + "'")
+        elif op == "BW" and not actual_value.startswith(expected_value):
+            errors.append("Field '" + column + "' is expected to start with '" + expected_value + "' but the actual value is '" + actual_value + "'")
+        elif op == "EW" and not actual_value.endswith(expected_value):
+            errors.append("Field '" + column + "' is expected to end with '" + expected_value + "' but the actual value is '" + actual_value + "'")
+        else:
+            self._log_info("For field '" + column + "' verified that the actual value '" + actual_value + "' " +
+                           self._get_operator_friendly_name(op) + " the expected value '" + expected_value + "'")
+
+    def _is_match_LK(self, value, pattern):
+        return fnmatch.fnmatchcase(value, pattern.replace("...", "*"))
 
     def validate_t24_record(self):
         self._make_sure_is_logged_in()
