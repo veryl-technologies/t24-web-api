@@ -1,5 +1,7 @@
 import time
 
+from selenium.common import exceptions
+
 from pageObjects import Page, robot_alias
 from robot.libraries.BuiltIn import BuiltIn
 from selenium.webdriver.common.keys import Keys
@@ -372,14 +374,18 @@ class T24RecordInputPage(T24Page):
     @robot_alias("set_T24_field_value")
     def set_T24_field_value(self, fieldName, fieldText):
 
+        fieldCtrl = self._get_field_ctrl(fieldName)
+        if not fieldCtrl:
+            raise exceptions.NoSuchElementException("Unable to find control for '" + fieldName + "' field name")
+
         if fieldText.upper().startswith("#AUTO"):
             fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
+        elif fieldText.upper().startswith("#SELECT-FIRST"):
+            fieldText = fieldCtrl.get_item_value_at(0)
         elif fieldText.startswith("#"):
             fieldText = self._evaluate_expression(fieldText[1:])
 
         self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
-
-        fieldCtrl = self._get_field_ctrl(fieldName)
 
         fieldCtrl.set_text(fieldText)
 
@@ -412,6 +418,8 @@ class T24RecordInputPage(T24Page):
                     return T24RadioFieldCtrl(self, fieldName, elements)
             except:
                 pass
+
+        return None
 
     def _get_commit_locator(self):
         return "css=img[alt=\"Commit the deal\"]"
@@ -544,6 +552,9 @@ class T24InputFieldCtrl(T24FieldCtrl):
     def set_control_text(self, fieldText):
         self.page.input_text(self.get_locator(self.fieldName), fieldText)
 
+    def get_item_value_at(self, index):
+        return ''
+
 class T24SelectFieldCtrl(T24FieldCtrl):
     def __init__(self, page, fieldName, element):
         T24FieldCtrl.__init__(self, page, fieldName, element)
@@ -554,6 +565,16 @@ class T24SelectFieldCtrl(T24FieldCtrl):
 
     def set_control_text(self, fieldText):
         self.page.select_from_list(self.get_locator(self.fieldName), fieldText)
+
+    def get_item_value_at(self, index):
+        locator = self.get_locator(self.fieldName) + " option";
+        elements = self.page.find_elements(locator)
+        if len(elements) > 0 and len(elements[0].get_attribute('value')):
+            return elements[0].get_attribute('value')
+        elif len(elements) > 1 :
+            return elements[1].get_attribute('value')
+
+        return ''
 
 class T24RadioFieldCtrl(T24FieldCtrl):
     def __init__(self, page, fieldName, elements):
@@ -577,3 +598,6 @@ class T24RadioFieldCtrl(T24FieldCtrl):
             return elem.get_attribute("innerText")
         except:
             return ""
+
+    def get_item_value_at(self, index):
+        return self.elements[0].get_attribute("value")
