@@ -105,7 +105,7 @@ class T24WebDriver:
         self._make_home_page_default()
 
     def _set_variable(self, name, value):
-        if name.startswith("g.") or name.startswith("global."):
+        if name.startswith("g_") or name.startswith("global_"):
             BuiltIn().set_global_variable("${" + name + "}", value)
             VariablesExporter().add(name, value)
         else:

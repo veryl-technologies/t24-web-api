@@ -56,11 +56,16 @@ class VariablesExporter:
     @staticmethod
     def _add_variable(output_file, name, value):
         with open(output_file, "rb+") as f:
+            f.seek(0, os.SEEK_END)
+            f.write(name + " = " + VariablesExporter._format_value(value) + "\r\n")
+    """ Old format using python method return value
+        with open(output_file, "rb+") as f:
             # remove the last character '}'
             f.seek(-1, os.SEEK_END)
             f.truncate()
             f.write("\r\n")
             f.write("            \"" + name + "\": " + VariablesExporter._format_value(value) + ",}")
+    """
 
     @staticmethod
     def _format_value(value):
@@ -76,9 +81,13 @@ class VariablesExporter:
         if os.path.isfile(outputFile):
             os.rename(outputFile, VariablesExporter._get_history_file_name(outputFile))
 
+        """ Old format using python method return value
         with open(outputFile, "w+") as f:
             f.write("def get_variables():\r\n")
             f.write("    return {}")
+        """
+        with open(outputFile, "w+") as f:
+            f.write("")
 
     @staticmethod
     def _assure_directory_exists(f):
