@@ -43,18 +43,15 @@ class BuiltinFunctions:
 
 class VariablesExporter:
     def add(self, name, value):
-        try:
-            output_file = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE}")
-            if output_file and len(output_file) > 0:
-                output_file_created = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}")
-                if not output_file_created or len(output_file_created) <= 0:
-                    self._create_output_file(output_file)
-                    BuiltIn().set_global_variable("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}", output_file)
-                    output_file_created = output_file  # TODO maybe the opposite assignment?
+        output_file = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE}")
+        if output_file and len(output_file) > 0:
+            output_file_created = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}")
+            if not output_file_created or len(output_file_created) <= 0:
+                self._create_output_file(output_file)
+                BuiltIn().set_global_variable("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}", output_file)
+                output_file_created = output_file
 
-                self._add_variable(output_file, name, value)
-        except:
-            pass  # TODO why not just let the exception?
+        self._add_variable(output_file, name, value)
 
     @staticmethod
     def _add_variable(output_file, name, value):
