@@ -322,7 +322,7 @@ class T24RecordSeePage(T24Page):
     @robot_alias("get_T24_field_value")
     def get_T24_field_value(self, fieldName):
         if fieldName == "ID" or fieldName == "@ID":
-            fieldValue = self._get_text("xpath=.//*[@id='transactionId']")
+            fieldValue = self._get_value("xpath=.//input[@id='transactionId' and preceding-sibling::span]")
         elif Config.get_t24_version() >= 14:
             fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
         else:
