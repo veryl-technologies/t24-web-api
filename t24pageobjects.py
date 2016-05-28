@@ -387,7 +387,7 @@ class T24RecordInputPage(T24Page):
         if fieldText.upper().startswith("#AUTO"):
             fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
         elif fieldText.upper().startswith("#SELECT-FIRST"):
-            fieldText = fieldCtrl.get_item_value_at(0)
+            fieldText = fieldCtrl.get_first_value(0)
         elif fieldText.startswith("#"):
             fieldText = self._evaluate_expression(fieldText[1:])
 
@@ -560,8 +560,8 @@ class T24InputFieldCtrl(T24FieldCtrl):
     def set_control_text(self, fieldText):
         self.page.input_text(self.get_locator(self.fieldName), fieldText)
 
-    def get_item_value_at(self, index):
-        return ''
+    def get_first_value(self):
+        return '' # TODO maybe it's good to return the text of the input field, although it would be empty
 
 
 class T24SelectFieldCtrl(T24FieldCtrl):
@@ -575,7 +575,7 @@ class T24SelectFieldCtrl(T24FieldCtrl):
     def set_control_text(self, fieldText):
         self.page.select_from_list(self.get_locator(self.fieldName), fieldText)
 
-    def get_item_value_at(self, index):
+    def get_first_value(self):
         locator = self.get_locator(self.fieldName) + " option"
         elements = self.page.find_elements(locator)
         if len(elements) > 0 and len(elements[0].get_attribute('value')):
@@ -609,5 +609,5 @@ class T24RadioFieldCtrl(T24FieldCtrl):
         except:
             return ""
 
-    def get_item_value_at(self, index):
+    def get_first_value(self):
         return self.elements[0].get_attribute("value")
