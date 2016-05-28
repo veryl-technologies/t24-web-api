@@ -59,6 +59,7 @@ class T24Page(Page):
         except:
             pass
 
+
 class T24LoginPage(T24Page):
     """ Models the T24 login page"""
 
@@ -108,6 +109,7 @@ class T24LoginPage(T24Page):
         self._take_page_screenshot("VERBOSE")
 
         return self._click_login()
+
 
 class T24HomePage(T24Page):
     """ Models the T24 home page """
@@ -228,6 +230,7 @@ class T24HomePage(T24Page):
         self._set_current_page(T24RecordSeePage())
         return self._get_current_page()
 
+
 class T24EnquiryStartPage(T24Page):
     """ Models the T24 Enquiry Start Page"""
 
@@ -257,6 +260,7 @@ class T24EnquiryStartPage(T24Page):
 
         self._set_current_page(T24EnquiryResultPage())
         return self._get_current_page()
+
 
 class T24EnquiryResultPage(T24Page):
     """ Models the T24 Enquiry Result Page"""
@@ -309,6 +313,7 @@ class T24EnquiryResultPage(T24Page):
 
         return res
 
+
 class T24RecordSeePage(T24Page):
     """ Models the T24 Record See Page"""
 
@@ -329,6 +334,7 @@ class T24RecordSeePage(T24Page):
             fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../..//*[3]//*")
         self.log("Retrieved value for field '" + fieldName + "' is '" + fieldValue + "'", "INFO", False)
         return fieldValue
+
 
 class T24RecordInputPage(T24Page):
     """ Models the T24 Record Input Page"""
@@ -498,6 +504,7 @@ class T24RecordInputPage(T24Page):
         self.click_element("css=img[alt=\"Authorises a deal\"]")
         return self
 
+
 class T24FieldCtrl:
     def __init__(self, page, fieldName, element):
         self.page = page
@@ -541,6 +548,7 @@ class T24FieldCtrl:
         if self.element:
             self.element.send_keys(Keys.TAB);
 
+
 class T24InputFieldCtrl(T24FieldCtrl):
     def __init__(self, page, fieldName, element):
         T24FieldCtrl.__init__(self, page, fieldName, element)
@@ -555,6 +563,7 @@ class T24InputFieldCtrl(T24FieldCtrl):
     def get_item_value_at(self, index):
         return ''
 
+
 class T24SelectFieldCtrl(T24FieldCtrl):
     def __init__(self, page, fieldName, element):
         T24FieldCtrl.__init__(self, page, fieldName, element)
@@ -567,14 +576,15 @@ class T24SelectFieldCtrl(T24FieldCtrl):
         self.page.select_from_list(self.get_locator(self.fieldName), fieldText)
 
     def get_item_value_at(self, index):
-        locator = self.get_locator(self.fieldName) + " option";
+        locator = self.get_locator(self.fieldName) + " option"
         elements = self.page.find_elements(locator)
         if len(elements) > 0 and len(elements[0].get_attribute('value')):
             return elements[0].get_attribute('value')
-        elif len(elements) > 1 :
+        elif len(elements) > 1:
             return elements[1].get_attribute('value')
 
         return ''
+
 
 class T24RadioFieldCtrl(T24FieldCtrl):
     def __init__(self, page, fieldName, elements):
@@ -588,10 +598,10 @@ class T24RadioFieldCtrl(T24FieldCtrl):
     def set_control_text(self, fieldText):
         for elem in self.elements:
             val = elem.get_attribute("value")
-            if val == fieldText or self._get_ratio_text(val) == fieldText:
+            if val == fieldText or self._get_radio_button_text(val) == fieldText:
                 elem.click()
 
-    def _get_ratio_text(self, radioInputValue):
+    def _get_radio_button_text(self, radioInputValue):
         try:
             locator = "css=input[name='radio:mainTab:" + self.fieldName + "'][value='" + radioInputValue + "'] + span"
             elem = self.page.find_element(locator)
