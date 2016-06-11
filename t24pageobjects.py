@@ -59,6 +59,22 @@ class T24Page(Page):
         except:
             pass
 
+    def evaluate_value(self, fieldText):
+        if fieldText.upper().startswith("#AUTO"):
+            fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
+        elif fieldText.startswith("#"):
+            fieldText = self._evaluate_expression(fieldText[1:])
+
+        return fieldText
+
+    def _evaluate_expression(self, expr):
+        # NOTE For a safer alternative to eval() see ast.literal_eval()
+        # http://stackoverflow.com/questions/15197673/using-pythons-eval-vs-ast-literal-eval
+        self.log("Evaluating expression '" + expr + "' ...", "INFO", False)
+        res = str(eval(expr))  # syntax for imports is eval("__import__('datetime').datetime.now()")
+        self.log("The result of expression evaluation is '" + res + "'", "INFO", False)
+        return res
+
 
 class T24LoginPage(T24Page):
     """ Models the T24 login page"""
@@ -209,6 +225,8 @@ class T24HomePage(T24Page):
     @robot_alias("open_edit_page")
     def open_edit_page(self, version, record_id):
         self._add_operation(T24OperationType.StertEditExitingRecord)
+
+        record_id = self.evaluate_value(record_id)
         self._enter_t24_command(version + " I " + record_id)
 
         self._set_current_page(T24RecordInputPage())
@@ -217,6 +235,8 @@ class T24HomePage(T24Page):
     @robot_alias("open_authorize_page")
     def open_authorize_page(self, version, record_id):
         self._add_operation(T24OperationType.StartAuthorizingRecord)
+
+        record_id = self.evaluate_value(record_id)
         self._enter_t24_command(version + " A " + record_id)
 
         self._set_current_page(T24RecordInputPage())
@@ -225,6 +245,8 @@ class T24HomePage(T24Page):
     @robot_alias("open_see_page")
     def open_see_page(self, version, record_id):
         self._add_operation(T24OperationType.SeeRecord)
+
+        record_id = self.evaluate_value(record_id)
         self._enter_t24_command(version + " S " + record_id)
 
         self._set_current_page(T24RecordSeePage())
@@ -368,14 +390,6 @@ class T24RecordInputPage(T24Page):
     def _get_id_from_transaction_confirmation_text(self, confirmTransactionText):
         return confirmTransactionText.replace('Txn Complete:', '').strip().split(' ', 1)[0]
 
-    def _evaluate_expression(self, expr):
-        # NOTE For a safer alternative to eval() see ast.literal_eval()
-        # http://stackoverflow.com/questions/15197673/using-pythons-eval-vs-ast-literal-eval
-        self.log("Evaluating expression '" + expr + "' ...", "INFO", False)
-        res = str(eval(expr))  # syntax for imports is eval("__import__('datetime').datetime.now()")
-        self.log("The result of expression evaluation is '" + res + "'", "INFO", False)
-        return res
-
     # Set a value in a text field, by specifying the underlying T24 field name
     @robot_alias("set_T24_field_value")
     def set_T24_field_value(self, fieldName, fieldText):
@@ -384,12 +398,10 @@ class T24RecordInputPage(T24Page):
         if not fieldCtrl:
             raise exceptions.NoSuchElementException("Unable to find control for '" + fieldName + "' field name")
 
-        if fieldText.upper().startswith("#AUTO"):
-            fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
-        elif fieldText.upper().startswith("#SELECT-FIRST"):
-            fieldText = fieldCtrl.get_first_value(0)
-        elif fieldText.startswith("#"):
-            fieldText = self._evaluate_expression(fieldText[1:])
+        if fieldText.upper().startswith("#SELECT-FIRST"):
+            fieldText = fieldCtrl.get_first_value()
+        else:
+            fieldText = self.evaluate_value(fieldText)
 
         self.log("Setting value '" + fieldText + "' to field '" + fieldName + "'", "INFO", False)
 
