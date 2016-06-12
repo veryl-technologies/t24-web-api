@@ -14,25 +14,28 @@ class T24WebDriverTestCase(unittest.TestCase):
         self.loginpage.open()
         self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
 
+
+
+
+
     def test_input_customer_input(self):
         inputPage = self.homePage.open_input_page_new_record("CUSTOMER,INPUT")
 
+        inputPage.set_T24_field_value("TITLE", "?SELECT-FIRST")
         inputPage.set_T24_field_value("ACCOUNT.OFFICER", "1")
-        inputPage.set_T24_field_value("GENDER", "MALE")
-        inputPage.set_T24_field_value("TITLE", "Dr")
+        inputPage.set_T24_field_value("GENDER", "?SELECT-FIRST")
+
         inputPage.set_T24_field_value("CUSTOMER.STATUS", "2")
         inputPage.set_T24_field_value("FAMILY.NAME", "SMITH")
         inputPage.set_T24_field_value("GIVEN.NAMES", "JOHN")
         inputPage.set_T24_field_value("INDUSTRY", "1000")
         inputPage.set_T24_field_value("LANGUAGE", "2")
-        inputPage.set_T24_field_value("NAME.1:1", "#AUTO-VALUE")
-        inputPage.set_T24_field_value("SHORT.NAME:1", "#AUTO-VALUE")
-        inputPage.set_T24_field_value("MNEMONIC", "#AUTO-VALUE")
+        inputPage.set_T24_field_value("NAME.1:1", "?AUTO-VALUE")
+        inputPage.set_T24_field_value("SHORT.NAME:1", "?AUTO-VALUE")
+        inputPage.set_T24_field_value("MNEMONIC", "?AUTO-VALUE")
         inputPage.set_T24_field_value("SECTOR", "1001")
         inputPage.set_T24_field_value("TARGET", "2")
         inputPage.set_T24_field_value("MARITAL.STATUS", "DIVORCED")
-
-
 
         inputPage.click_commit_button()
         inputPage.click_accept_overrides()
@@ -42,12 +45,23 @@ class T24WebDriverTestCase(unittest.TestCase):
         print "ID of created CUSTOMER record is " + new_id
         inputPage.close_window()
         self.homePage.sign_off()   # sometimes this blows up
-
 """
+
+    def test_menu_command(self):
+        inputPage = self.homePage.run_t24_menu_command("User Menu > Customer >Corporate Customer")
+
+    def test_see(self):
+        # seePage = self.homePage.open_see_page("CUSTOMER", "? 'AB' + 'CL'")
+        seePage = self.homePage.open_see_page("FT", "? 'FT' + '141124JS4S'")
+        print seePage.get_T24_field_value("@ID")
+        print seePage.get_T24_field_value("MNEMONIC")
+        print seePage.get_T24_field_value("SECTOR")
+        self.homePage.sign_off()
+
     def test_input_customer_complex(self):
         inputPage = self.homePage.open_input_page_new_record("CUSTOMER,CORP")
         inputPage.set_T24_field_value("TITLE", "Dr")
-        inputPage.set_T24_field_value("MNEMONIC", "#AUTO-MNEMONIC")
+        inputPage.set_T24_field_value("MNEMONIC", "?AUTO-MNEMONIC")
         inputPage.set_T24_field_value("NAME.1:1", "DUP")
         inputPage.set_T24_field_value("SHORT.NAME:1", "OLIVER")
         inputPage.set_T24_field_value("SECTOR", "2001")
@@ -95,13 +109,9 @@ class T24WebDriverTestCase(unittest.TestCase):
         inputPage.close_window()
         self.homePage.sign_off()   # sometimes this blows up
 
-
-
-
-
     def test_input_customer(self):
         inputPage = self.homePage.open_input_page_new_record("CUSTOMER")
-        inputPage.set_T24_field_value("MNEMONIC", "#AUTO")
+        inputPage.set_T24_field_value("MNEMONIC", "?AUTO")
         inputPage.set_T24_field_value("NAME.1:1", "ALABALA")
         inputPage.set_T24_field_value("SHORT.NAME:1", "SOMETHING")
         inputPage.set_T24_field_value("STREET:1", "SESAME STR")

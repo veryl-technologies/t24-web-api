@@ -200,7 +200,7 @@ class T24WebDriver:
         return validation_fields, validation_operators, validation_values
 
     def _process_validation_value(self, val):
-        if val.startswith("#"):
+        if val.startswith("?"):
             val = self._evaluate_expression(val[1:])
         return val
 

@@ -60,9 +60,9 @@ class T24Page(Page):
             pass
 
     def evaluate_value(self, fieldText):
-        if fieldText.upper().startswith("#AUTO"):
+        if fieldText.upper().startswith("?AUTO"):
             fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
-        elif fieldText.startswith("#"):
+        elif fieldText.startswith("?"):
             fieldText = self._evaluate_expression(fieldText[1:])
 
         return fieldText
@@ -414,7 +414,7 @@ class T24RecordInputPage(T24Page):
         if not fieldCtrl:
             raise exceptions.NoSuchElementException("Unable to find control for '" + fieldName + "' field name")
 
-        if fieldText.upper().startswith("#SELECT-FIRST"):
+        if fieldText.upper().startswith("?SELECT-FIRST"):
             fieldText = fieldCtrl.get_first_value()
         else:
             fieldText = self.evaluate_value(fieldText)

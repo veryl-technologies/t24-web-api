@@ -8,7 +8,7 @@ Scenario: Create and verify a coprorate customer
     [Documentation]    A sample customer test with I,A,S
     [Tags]    tag1    tag2
     T24 Login    INPUTTER
-    @{testDataFields}=    Create List    NAME.1:1=DUP    MNEMONIC=#AUTO-MNEMONIC    SHORT.NAME:1=OLIVER    NATIONALITY=GR    RESIDENCE=GR
+    @{testDataFields}=    Create List    NAME.1:1=DUP    MNEMONIC=?AUTO-MNEMONIC    SHORT.NAME:1=OLIVER    NATIONALITY=GR    RESIDENCE=GR
     ...    LANGUAGE=1    STREET:1=LAKESHORE STREET    SECTOR=2001
     Create Or Amend T24 Record    CUSTOMER    \    ${testDataFields}    Accept All    ${EMPTY}
     Authorize T24 Record    CUSTOMER    ${TX_ID}    0
@@ -37,7 +37,7 @@ Scenario: Verify %CUSTOMER enquiry
     Check T24 Record    CUSTOMER    ${CUST_ID}    ${validationRules}
 
 Demo
-    @{testDataFields}=    Create List    NAME.1:1=#AUTO-VALUE    SHORT.NAME:1=#AUTO-VALUE    MNEMONIC=#AUTO-VALUE    STREET:1=LAKESHORE STREET    NATIONALITY=US
+    @{testDataFields}=    Create List    NAME.1:1=?AUTO-VALUE    SHORT.NAME:1=?AUTO-VALUE    MNEMONIC=?AUTO-VALUE    STREET:1=LAKESHORE STREET    NATIONALITY=US
     ...    RESIDENCE=US    LANGUAGE=1    SECTOR=1001
     Create Or Amend T24 Record    CUSTOMER    >>CUST1    ${testDataFields}    \    ${EMPTY}
     Authorize T24 Record    CUSTOMER    ${CUST1}
