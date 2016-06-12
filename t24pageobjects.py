@@ -219,15 +219,57 @@ class T24HomePage(T24Page):
     def run_t24_menu_command(self, menu_items):
         self._make_sure_home_page_is_active()
 
-        self.log("Executing mwnu command '" + menu_items + "' ...", "INFO", False)
+        self.log("Executing menu command '" + menu_items + "' ...", "INFO", False)
 
         self.select_window()
 
         self.select_frame(self.selectors["menu frame"])
 
-        # TODO
+        items = [item.strip() for item in menu_items.split('>')]
+
+        xpath = self._build_menu_command_xpath_full(items)
+        elements = self.find_elements(xpath)
+        if len(elements) == 0:
+            raise exceptions.NoSuchElementException("Unable to find menu path '" + menu_items + "'")
+        elif len(elements) > 1:
+            raise exceptions.NoSuchElementException("More than one menu items with given path found: '" + menu_items + "'")
+
+        menu_element = elements[0]
+
+        # go and find all of the parent nodes
+        parent = menu_element.find_element_by_xpath("..")
+        parents = []
+        while True:
+            parent = parent.find_element_by_xpath("../..")
+            if parent.tag_name != u'li':
+                break;
+            parents.insert(0, parent)
+
+        # expand all of the parent nodes
+        for p in parents:
+            e = p.find_element_by_xpath("span[@onclick='ProcessMouseClick(event)']/img")
+            e.click()
+
+        # click on the end element
+        menu_element.click()
+
+        # todo - set curret page should be done here or sth else?
+        # todo - we can check the menu_element for type of the page opened (I, A, S, COS ... ) to determine what current page we should set
 
         self._take_page_screenshot("VERBOSE")
+
+    def _build_menu_command_xpath_full(self, items):
+        # "xpath=.//li[@class='clsHasKids']/span[text()='Customer']/following-sibling::ul[1]/li/a[contains(@onclick, 'Individual Customer')]"
+        result = "xpath=./"
+        i = 0
+        for item in items:
+            i += 1
+            if i == len(items): # last item
+                result += "/li/a[contains(@onclick, '" + item + "')]"
+            else:
+                result += "/li[@class='clsHasKids']/span[text()='" + item + "']/following-sibling::ul[1]"
+
+        return result
 
     # Opens a T24 input page
     @robot_alias("open_input_page_new_record")

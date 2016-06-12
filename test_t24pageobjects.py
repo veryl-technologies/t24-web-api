@@ -16,7 +16,12 @@ class T24WebDriverTestCase(unittest.TestCase):
 
 
 
+    def test_menu_command(self):
+        # inputPage = self.homePage.run_t24_menu_command("User Menu > Customer >Corporate Customer")
+        inputPage = self.homePage.run_t24_menu_command("Finance - Operations > Provision>Asset Details")
 
+
+"""
 
     def test_input_customer_input(self):
         inputPage = self.homePage.open_input_page_new_record("CUSTOMER,INPUT")
@@ -45,10 +50,7 @@ class T24WebDriverTestCase(unittest.TestCase):
         print "ID of created CUSTOMER record is " + new_id
         inputPage.close_window()
         self.homePage.sign_off()   # sometimes this blows up
-"""
 
-    def test_menu_command(self):
-        inputPage = self.homePage.run_t24_menu_command("User Menu > Customer >Corporate Customer")
 
     def test_see(self):
         # seePage = self.homePage.open_see_page("CUSTOMER", "? 'AB' + 'CL'")
