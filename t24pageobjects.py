@@ -143,6 +143,7 @@ class T24HomePage(T24Page):
         "banner frame user": "xpath=//frame[contains(@id,'USER')]",
         "command line": "css=input[name='commandValue']",
         "frame tab": "xpath=//frame[contains(@id,'FRAMETAB')]",
+        "menu frame": "xpath=//frame[contains(@id,'menu') or contains(@id,'USER')]",
     }
 
     @robot_alias("sign_off")
@@ -212,6 +213,21 @@ class T24HomePage(T24Page):
             self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
             self._set_current_page(T24EnquiryResultPage())
             return self._get_current_page()
+
+    # Executed T24 menu command
+    @robot_alias("run_t24_menu_command")
+    def run_t24_menu_command(self, menu_items):
+        self._make_sure_home_page_is_active()
+
+        self.log("Executing mwnu command '" + menu_items + "' ...", "INFO", False)
+
+        self.select_window()
+
+        self.select_frame(self.selectors["menu frame"])
+
+        # TODO
+
+        self._take_page_screenshot("VERBOSE")
 
     # Opens a T24 input page
     @robot_alias("open_input_page_new_record")

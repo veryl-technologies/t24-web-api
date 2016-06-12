@@ -68,9 +68,17 @@ class T24WebDriver:
             self.home_page.sign_off()
             self.home_page = None
 
-    def execute_t24_menu_command(self):
+    def execute_t24_menu_command(self, menu_items):
+        """
+        Executes T24 menu command with specified menu items separated by '>'
+        Example: 'User Menu > Customer > Individual Customer'
+        Note that starting items can be omitted.
+        For example: 'Customer > Individual Customer' or 'Individual Customer' will both navigate to the same target
+        """
+
         self._make_sure_is_logged_in()
-        raise NotImplementedError('TODO execute_t24_menu_command')
+
+        self.home_page.run_t24_menu_command(menu_items)
 
     def create_or_amend_t24_record(self, app_version, record_id, record_field_values, oveerrides_handling=None, error_handling=None, post_verification=None):
         """
