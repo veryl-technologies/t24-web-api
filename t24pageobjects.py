@@ -158,6 +158,35 @@ class T24HomePage(T24Page):
         self._set_current_page(T24LoginPage())
         return self._get_current_page()
 
+    def _find_or_open_app_window(self, version, command, id):
+        if self._find_and_select_suitable_opened_window(version, command, id):
+            return
+
+        self._enter_t24_command(version + " " + command + " " + id)
+
+    def _find_or_open_enq_window(self, enquiry_name, filter_text):
+        # todo - try to find suitable window or frame to execute the entire enquiry
+        command = "ENQ " + enquiry_name
+        if filter_text:
+            command += " " + filter_text
+        self._enter_t24_command("ENQ " + enquiry_name + " " + id)
+
+    def _find_and_select_suitable_opened_window(self, version, command, id):
+        while len(self.get_window_names()) > 1:    # while there are other windows apart from the main
+            self.select_window('new')
+            if self._is_current_window_suitable_for_command(version, command, id):
+                return True
+
+            self._get_current_page().close_window()
+
+        self._set_current_page(T24HomePage())
+        self.select_window()
+        return False
+
+    def _is_current_window_suitable_for_command(self, version, command, id):
+        # todo
+        return False
+
     # Enter a T24 command and simulate an Enter
     def _enter_t24_command(self, text):
 
@@ -204,13 +233,13 @@ class T24HomePage(T24Page):
         self._add_operation(T24OperationType.Enquiry)
         # prepare the filter text
         if not enquiry_filters:
-            self._enter_t24_command("ENQ " + enquiry_name)
+            self._find_or_open_enq_window(enquiry_name, None)
             enq_start_page = T24EnquiryStartPage()
             self._set_current_page(enq_start_page)
             return enq_start_page.run_enquiry_no_filters()
         else:
             filter_text = ' '.join([str(f) for f in enquiry_filters])
-            self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
+            self._find_or_open_enq_window(enquiry_name, filter_text)
             self._set_current_page(T24EnquiryResultPage())
             return self._get_current_page()
 
@@ -258,6 +287,9 @@ class T24HomePage(T24Page):
 
         self._take_page_screenshot("VERBOSE")
 
+        self._set_current_page(T24Page())
+        return self._get_current_page()
+
     def _build_menu_command_xpath_full(self, items):
         # "xpath=.//li[@class='clsHasKids']/span[text()='Customer']/following-sibling::ul[1]/li/a[contains(@onclick, 'Individual Customer')]"
         result = "xpath=./"
@@ -275,7 +307,7 @@ class T24HomePage(T24Page):
     @robot_alias("open_input_page_new_record")
     def open_input_page_new_record(self, version):
         self._add_operation(T24OperationType.StartInputNewRecord)
-        self._enter_t24_command(version + " I F3")
+        self._find_or_open_app_window(version, "I", "F3")
 
         self._set_current_page(T24RecordInputPage())
         return self._get_current_page()
@@ -285,7 +317,7 @@ class T24HomePage(T24Page):
         self._add_operation(T24OperationType.StertEditExitingRecord)
 
         record_id = self.evaluate_value(record_id)
-        self._enter_t24_command(version + " I " + record_id)
+        self._find_or_open_app_window(version, "I", record_id)
 
         self._set_current_page(T24RecordInputPage())
         return self._get_current_page()
@@ -295,7 +327,7 @@ class T24HomePage(T24Page):
         self._add_operation(T24OperationType.StartAuthorizingRecord)
 
         record_id = self.evaluate_value(record_id)
-        self._enter_t24_command(version + " A " + record_id)
+        self._find_or_open_app_window(version, "A", record_id)
 
         self._set_current_page(T24RecordInputPage())
         return self._get_current_page()
@@ -305,7 +337,7 @@ class T24HomePage(T24Page):
         self._add_operation(T24OperationType.SeeRecord)
 
         record_id = self.evaluate_value(record_id)
-        self._enter_t24_command(version + " S " + record_id)
+        self._find_or_open_app_window(version, "S", record_id)
 
         self._set_current_page(T24RecordSeePage())
         return self._get_current_page()
@@ -602,6 +634,7 @@ class T24FieldCtrl:
             while len(newWindowNames) > windowsCount:
                 self.page.select_window(newWindowNames[len(newWindowNames) - 1])
                 self.page.close_window()
+
                 newWindowNames = self.page.get_window_names()
 
             self.page.select_window(newWindowNames[len(newWindowNames) - 1])
