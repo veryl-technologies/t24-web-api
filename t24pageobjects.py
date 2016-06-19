@@ -75,6 +75,12 @@ class T24Page(Page):
         self.log("The result of expression evaluation is '" + res + "'", "INFO", False)
         return res
 
+    def _get_authorize_locator(self):
+        return "css=img[alt=\"Authorises a deal\"]"
+
+    def _get_commit_locator(self):
+        return "css=img[alt=\"Commit the deal\"]"
+
 
 class T24LoginPage(T24Page):
     """ Models the T24 login page"""
@@ -165,13 +171,18 @@ class T24HomePage(T24Page):
         self._enter_t24_command(version + " " + command + " " + id)
 
     def _find_or_open_enq_window(self, enquiry_name, filter_text):
-        # todo - try to find suitable window or frame to execute the entire enquiry
+        if self._find_and_select_suitable_opened_window(enquiry_name, "ENQ", None):
+            return
+
         command = "ENQ " + enquiry_name
         if filter_text:
             command += " " + filter_text
         self._enter_t24_command("ENQ " + enquiry_name + " " + id)
 
     def _find_and_select_suitable_opened_window(self, version, command, id):
+        return False
+        """NOT IMPLEMENTED
+
         while len(self.get_window_names()) > 1:    # while there are other windows apart from the main
             self.select_window('new')
             if self._is_current_window_suitable_for_command(version, command, id):
@@ -182,10 +193,53 @@ class T24HomePage(T24Page):
         self._set_current_page(T24HomePage())
         self.select_window()
         return False
+        """
 
     def _is_current_window_suitable_for_command(self, version, command, id):
-        # todo
+        info = self._get_current_window_info()
+        if info is not None and info.command == command and info.version == version:
+            if command == "I" or command == "A" or command == "S":
+                if id is not None and len(id) > 0 and id != "F3":
+                    # transaction ID must match
+                    if info.transactionId != id:
+                        return False
+
+            return True
+
         return False
+
+    def _get_current_window_info(self):
+        try:
+            form = self.find_element("xpath=.//form[@id='appreq']")
+            version = form.find_element_by_xpath("input[@id='version']").get_attribute("value")
+            application = form.find_element_by_xpath("input[@id='application']").get_attribute("value")
+
+            if T24RecordInputPage().is_txt_complete_displayed():
+                id = T24RecordInputPage().get_id_from_completed_transaction()
+                return dict(command = "", version = application + version, transactionId = id, isCommited = True)
+
+            id = T24TransactionPage().get_transaction_id()
+
+            if self._commit_btn_enabled():
+                return dict(command = "I", version = application + version, transactionId = id)
+            elif self._autorize_btn_enabled():
+                return dict(command = "A", version = application + version, transactionId = id)
+            else:
+                return dict(command = "S", version = application + version, transactionId = id)
+        except:
+            try:
+                form = self.find_element("xpath=.//form[@id='enqsel']") # enquiry form don't exists when on selection
+                enqname = form.find_element_by_xpath("input[@id='enqname']").get_attribute("value")
+                return dict(command = "ENQ", version = enqname, isSelection = True)
+            except:
+                try:
+                    form = self.find_element("xpath=.//form[@id='enquiry']")
+                    version = form.find_element_by_xpath("input[@id='version']").get_attribute("value")
+                    return dict(command = "ENQ", version = version, isSelection = False)
+                except:
+                    pass
+
+        return None
 
     # Enter a T24 command and simulate an Enter
     def _enter_t24_command(self, text):
@@ -426,7 +480,14 @@ class T24EnquiryResultPage(T24Page):
         return res
 
 
-class T24RecordSeePage(T24Page):
+class T24TransactionPage(T24Page):
+    def get_transaction_id(self):
+        try:
+            return self.get_text("xpath=.//span[@class='iddisplay']")
+        except:
+            return ""
+
+class T24RecordSeePage(T24TransactionPage):
     """ Models the T24 Record See Page"""
 
     # Allows us to call by proper name
@@ -448,7 +509,7 @@ class T24RecordSeePage(T24Page):
         return fieldValue
 
 
-class T24RecordInputPage(T24Page):
+class T24RecordInputPage(T24TransactionPage):
     """ Models the T24 Record Input Page"""
 
     # Allows us to call by proper name
@@ -529,9 +590,6 @@ class T24RecordInputPage(T24Page):
 
         return None
 
-    def _get_commit_locator(self):
-        return "css=img[alt=\"Commit the deal\"]"
-
     # Clicks the Commit Button when dealing with T24 transactions
     def click_commit_button(self):
         self._take_page_screenshot("VERBOSE")
@@ -603,7 +661,7 @@ class T24RecordInputPage(T24Page):
 
     # Clicks the Authorize Button When Dealing with T24 Transactions
     def click_authorize_button(self):
-        self.click_element("css=img[alt=\"Authorises a deal\"]")
+        self.click_element(self._get_authorize_locator())
         return self
 
 
