@@ -549,6 +549,8 @@ class T24RecordInputPage(T24TransactionPage):
         if not fieldCtrl:
             raise exceptions.NoSuchElementException("Unable to find control for '" + fieldName + "' field name")
 
+        self._select_field_tab(fieldCtrl)
+
         if fieldText.upper().startswith("?SELECT-FIRST"):
             fieldText = fieldCtrl.get_first_value()
         else:
@@ -566,11 +568,13 @@ class T24RecordInputPage(T24TransactionPage):
 
         while maxRetries > 0:
             maxRetries -= 1
-
+            hiddenFieldTabName = None
             try:
                 element = self.find_element(T24InputFieldCtrl.get_locator(fieldName), False, 0)
-                if element and element.is_displayed():
+                if element and element.get_attribute("type") != u'hidden':
                     return T24InputFieldCtrl(self, fieldName, element)
+                elif element.get_attribute("type") == u'hidden':
+                    hiddenFieldTabName = element.get_attribute("tabname")
             except:
                 pass
 
@@ -582,13 +586,24 @@ class T24RecordInputPage(T24TransactionPage):
                 pass
 
             try:
-                elements = self.find_elements(T24RadioFieldCtrl.get_locator(fieldName), False, waitTimeBetweenRetries)
+                elements = self.find_elements(T24RadioFieldCtrl.get_locator(fieldName, hiddenFieldTabName), False, waitTimeBetweenRetries)
                 if elements:
-                    return T24RadioFieldCtrl(self, fieldName, elements)
+                    return T24RadioFieldCtrl(self, fieldName, elements, hiddenFieldTabName)
             except:
                 pass
 
         return None
+
+    def _select_field_tab(self, fieldCtrl):
+        try:
+            tabName = fieldCtrl.element.get_attribute("tabname")
+            if tabName and tabName != "mainTab":
+                onclickVal = "javascript:changetab('" + tabName + "')"
+                tabElement = self.find_element('xpath=.//a[@onclick="' + onclickVal + '"]')
+                if tabElement.get_attribute("class") == "nonactive-tab":
+                    tabElement.click()
+        except:
+            pass    # not essential action
 
     # Clicks the Commit Button when dealing with T24 transactions
     def click_commit_button(self):
@@ -748,13 +763,14 @@ class T24SelectFieldCtrl(T24FieldCtrl):
 
 
 class T24RadioFieldCtrl(T24FieldCtrl):
-    def __init__(self, page, fieldName, elements):
+    def __init__(self, page, fieldName, elements, tabName):
         T24FieldCtrl.__init__(self, page, fieldName, elements[0])
         self.elements = elements
+        self.tabName = tabName
 
     @staticmethod
-    def get_locator(fieldName):
-        return "css=input[name='radio:mainTab:" + fieldName + "']"
+    def get_locator(fieldName, tabName):
+        return "css=input[name='radio:" + tabName + ":" + fieldName + "']"
 
     def set_control_text(self, fieldText):
         for elem in self.elements:
@@ -764,7 +780,7 @@ class T24RadioFieldCtrl(T24FieldCtrl):
 
     def _get_radio_button_text(self, radioInputValue):
         try:
-            locator = "css=input[name='radio:mainTab:" + self.fieldName + "'][value='" + radioInputValue + "'] + span"
+            locator = "css=input[name='radio:" + self.tabName + ":" + self.fieldName + "'][value='" + radioInputValue + "'] + span"
             elem = self.page.find_element(locator)
             return elem.get_attribute("innerText")
         except:
