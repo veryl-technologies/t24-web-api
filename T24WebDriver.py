@@ -100,7 +100,7 @@ class T24WebDriver:
         if oveerrides_handling == "Accept All":
             if input_page.is_accept_overrides_displayed():
                 input_page.click_accept_overrides()
-                if not input_page.is_txt_complete_displayed():
+                if not input_page.is_txn_complete_displayed():
                     input_page.click_commit_button()
 
         self.last_input_id = input_page.get_id_from_completed_transaction()

@@ -183,12 +183,15 @@ class T24HomePage(T24Page):
         return False
         """NOT IMPLEMENTED
 
-        while len(self.get_window_names()) > 1:    # while there are other windows apart from the main
-            self.select_window('new')
+        windowNames = self.get_window_names()
+
+        while len(windowNames) > 1:    # while there are other windows apart from the main
+            self.select_window(windowNames[len(windowNames) - 1])
             if self._is_current_window_suitable_for_command(version, command, id):
                 return True
 
             self._get_current_page().close_window()
+            windowNames = self.get_window_names()
 
         self._set_current_page(T24HomePage())
         self.select_window()
@@ -197,11 +200,15 @@ class T24HomePage(T24Page):
 
     def _is_current_window_suitable_for_command(self, version, command, id):
         info = self._get_current_window_info()
-        if info is not None and info.command == command and info.version == version:
+
+        if info['isCommited']:
+            return False
+
+        if info is not None and info['command'] == command and info['version'] == version:
             if command == "I" or command == "A" or command == "S":
                 if id is not None and len(id) > 0 and id != "F3":
                     # transaction ID must match
-                    if info.transactionId != id:
+                    if info['transactionId'] != id:
                         return False
 
             return True
@@ -210,32 +217,32 @@ class T24HomePage(T24Page):
 
     def _get_current_window_info(self):
         try:
-            form = self.find_element("xpath=.//form[@id='appreq']")
+            form = self.find_element("xpath=.//form[@id='appreq']", False, 0)
             version = form.find_element_by_xpath("input[@id='version']").get_attribute("value")
             application = form.find_element_by_xpath("input[@id='application']").get_attribute("value")
 
-            if T24RecordInputPage().is_txt_complete_displayed():
+            if T24RecordInputPage().is_txn_complete_displayed_no_wait():
                 id = T24RecordInputPage().get_id_from_completed_transaction()
                 return dict(command = "", version = application + version, transactionId = id, isCommited = True)
 
             id = T24TransactionPage().get_transaction_id()
 
-            if self._commit_btn_enabled():
-                return dict(command = "I", version = application + version, transactionId = id)
-            elif self._autorize_btn_enabled():
-                return dict(command = "A", version = application + version, transactionId = id)
+            if T24TransactionPage().commit_btn_enabled():
+                return dict(command = "I", version = application + version, transactionId = id, isCommited = False)
+            elif T24TransactionPage.autorize_btn_enabled():
+                return dict(command = "A", version = application + version, transactionId = id, isCommited = False)
             else:
-                return dict(command = "S", version = application + version, transactionId = id)
+                return dict(command = "S", version = application + version, transactionId = id, isCommited = False)
         except:
             try:
-                form = self.find_element("xpath=.//form[@id='enqsel']") # enquiry form don't exists when on selection
+                form = self.find_element("xpath=.//form[@id='enqsel']", False, 0) # enquiry form don't exists when on selection
                 enqname = form.find_element_by_xpath("input[@id='enqname']").get_attribute("value")
-                return dict(command = "ENQ", version = enqname, isSelection = True)
+                return dict(command = "ENQ", version = enqname, isSelection = True, transactionId = '', isCommited = False)
             except:
                 try:
-                    form = self.find_element("xpath=.//form[@id='enquiry']")
+                    form = self.find_element("xpath=.//form[@id='enquiry']", False, 0)
                     version = form.find_element_by_xpath("input[@id='version']").get_attribute("value")
-                    return dict(command = "ENQ", version = version, isSelection = False)
+                    return dict(command = "ENQ", version = version, isSelection = False, transactionId = '', isCommited = False)
                 except:
                     pass
 
@@ -483,9 +490,24 @@ class T24EnquiryResultPage(T24Page):
 class T24TransactionPage(T24Page):
     def get_transaction_id(self):
         try:
-            return self.get_text("xpath=.//span[@class='iddisplay']")
+            return self.get_text("xpath=.//span[contains(@class, 'iddisplay')]")
         except:
             return ""
+
+    def commit_btn_enabled(self):
+        try:
+            btn = self.find_element("xpath=.//img[@title='Commit the deal']")
+            return "_dis.gif" not in btn.get_attribute("src")
+        except:
+            return False
+
+    def autorize_btn_enabled(self):
+        try:
+            btn = self.find_element("xpath=.//img[@title='Authorises a deal']")
+            return "_dis.gif" not in btn.get_attribute("src")
+        except:
+            return False
+
 
 class T24RecordSeePage(T24TransactionPage):
     """ Models the T24 Record See Page"""
@@ -535,8 +557,16 @@ class T24RecordInputPage(T24TransactionPage):
         transactionId = self._get_id_from_transaction_confirmation_text(confirmationMsg)
         return transactionId
 
-    def is_txt_complete_displayed(self):
+    def is_txn_complete_displayed(self):
         return self._page_contains("Txn Complete")
+
+    def is_txn_complete_displayed_no_wait(self):
+        try:
+            if self.find_element("xpath=.//*[contains(text(),'Txn Complete')]", False, 0) is not None:
+                return True
+            return False
+        except:
+            return False
 
     def _get_id_from_transaction_confirmation_text(self, confirmTransactionText):
         return confirmTransactionText.replace('Txn Complete:', '').strip().split(' ', 1)[0]
