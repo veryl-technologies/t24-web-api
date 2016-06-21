@@ -2,6 +2,7 @@
 from t24pageobjects import T24LoginPage
 from T24ExecutionContext import T24ExecutionContext
 from robot.libraries.BuiltIn import BuiltIn
+from robot.libraries import Dialogs
 from utils import VariablesExporter
 import fnmatch
 
@@ -311,4 +312,9 @@ class T24WebDriver:
             self.login_page.close_all_browsers()
             self.login_page = None
 
+    def manual_step(self, message):
+        Dialogs.execute_manual_step(message)
 
+    def pause_step(self, message):
+        Dialogs.pause_execution(message)
+        
