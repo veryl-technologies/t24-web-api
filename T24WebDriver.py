@@ -140,6 +140,10 @@ class T24WebDriver:
         """
         Retrieves the T24 record by its unique ID and verifies its fields against some predefined criteria
         """
+
+        if not validations:
+            validations = ['@ID >> id']  # empty SEE should maybe check for record existance
+
         # parse the rules in 3 arrays
         validation_fields, validation_operators, validation_values = self._parse_validation_rules(validations)
 
@@ -317,4 +321,3 @@ class T24WebDriver:
 
     def pause_step(self, message):
         Dialogs.pause_execution(message)
-        
