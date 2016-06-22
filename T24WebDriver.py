@@ -142,7 +142,9 @@ class T24WebDriver:
         """
 
         if not validations:
-            validations = ['@ID >> id']  # empty SEE should maybe check for record existance
+            self._log_info('No actions specified after records retrieval. Would try to read @ID...')
+            validations = ['@ID >> dummy']  # empty SEE should probably check for record existence.
+            # TODO optimize to check for 'RECORD NOT FOUND' instead of waiting for failed XPATH
 
         # parse the rules in 3 arrays
         validation_fields, validation_operators, validation_values = self._parse_validation_rules(validations)
