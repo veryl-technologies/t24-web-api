@@ -188,7 +188,7 @@ class T24WebDriver:
         elif op == "BW":
             return "begins with"
         elif op == "EW":
-            return "starts with"
+            return "ends with"
         else:
             return op
 
