@@ -8,7 +8,7 @@ from selenium.webdriver.common.keys import Keys
 
 from T24OperationType import T24OperationType
 from T24ExecutionContext import T24ExecutionContext
-from utils import BuiltinFunctions
+import BuiltinFunctions
 from utils import Config
 from datetime import datetime
 import time
@@ -61,7 +61,7 @@ class T24Page(Page):
 
     def evaluate_value(self, fieldText):
         if fieldText.upper().startswith("?AUTO"):
-            fieldText = BuiltinFunctions().get_unique_new_customer_mnemonic()
+            fieldText = BuiltinFunctions.get_unique_new_customer_mnemonic()
         elif fieldText.startswith("?"):
             fieldText = self._evaluate_expression(fieldText[1:])
 
