@@ -21,6 +21,6 @@ Scenario: Manual COB
     [Documentation]    Showcase all built-in options for manual actions
     [Tags]    manual
     Dialogs.Get Selection From User    For which T24 company    GB00001    US00002
-    Dialogs.Pause Execution    Please start the COB process manually and wait for it to complete.
+    Pause Step    Please start the COB process manually and wait for it to complete.
     Dialogs.Get Value From User    How many minutes did the operation take?.
-    Dialogs.Execute Manual Step    Did the COB test case pass successfully?
+    Manual Step    Did the COB test case pass successfully?
