@@ -70,9 +70,9 @@ class T24Page(Page):
     def _evaluate_expression(self, expr):
         # NOTE For a safer alternative to eval() see ast.literal_eval()
         # http://stackoverflow.com/questions/15197673/using-pythons-eval-vs-ast-literal-eval
-        expr = expr.replace('$$', "__import__('BuiltinFunctions').")
+        expr = expr.replace('$', "__import__('BuiltinFunctions').")  # TODO support escaping (via $$)
         self.log("Evaluating expression '" + expr + "' ...", "INFO", False)
-        res = str(eval(expr))  # syntax for imports is eval("__import__('datetime').datetime.now()")
+        res = str(eval(expr))
         self.log("The result of expression evaluation is '" + res + "'", "INFO", False)
         return res
 
