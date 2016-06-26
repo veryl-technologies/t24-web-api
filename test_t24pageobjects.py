@@ -1,7 +1,6 @@
 from t24pageobjects import T24LoginPage
 import os
 import unittest
-import time
 
 
 class T24WebDriverTestCase(unittest.TestCase):
