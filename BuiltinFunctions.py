@@ -21,3 +21,9 @@ def get_unique_new_customer_mnemonic():
     code = num_to_short_alphanumeric(secondsPassed)
     result = code.rjust(8, 'Z')
     return result
+
+
+def add_t24_days(date_str, num_days):
+    date = datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(days=num_days)
+    return date.strftime('%Y%m%d')
+
