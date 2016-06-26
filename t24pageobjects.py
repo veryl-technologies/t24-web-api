@@ -580,6 +580,7 @@ class T24RecordInputPage(T24TransactionPage):
         if not fieldCtrl:
             raise exceptions.NoSuchElementException("Unable to find control for '" + fieldName + "' field name")
 
+        self.log("Checking if the field is in another tab...", "DEBUG", False)
         self._select_field_tab(fieldCtrl)
 
         if fieldText.upper().startswith("?SELECT-FIRST"):
@@ -632,6 +633,7 @@ class T24RecordInputPage(T24TransactionPage):
                 onclickVal = "javascript:changetab('" + tabName + "')"
                 tabElement = self.find_element('xpath=.//a[@onclick="' + onclickVal + '"]')
                 if tabElement.get_attribute("class") == "nonactive-tab":
+                    self.log("Activating tab " + tabName, "DEBUG", False)
                     tabElement.click()
         except:
             pass    # not essential action
@@ -718,7 +720,10 @@ class T24FieldCtrl:
         self.element = element
 
     def set_text(self, fieldText):
+        self.page.log("Checking if the field is a hot field...", "DEBUG", False)
         isHotField = self._is_hot_field()
+
+        self.page.log("Checking if the field auto-launches an enquiry...", "DEBUG", False)
         isAutoLaunchEnquiry = not isHotField and self._is_auto_launch_enquiry()
 
         self.set_control_text(fieldText)
@@ -765,10 +770,11 @@ class T24InputFieldCtrl(T24FieldCtrl):
         return "css=input[name='fieldName:" + fieldName + "']"
 
     def set_control_text(self, fieldText):
+        self.page.log("Setting a value to a text field...", "DEBUG", False)
         self.page.input_text(self.get_locator(self.fieldName), fieldText)
 
     def get_first_value(self):
-        return '' # TODO maybe it's good to return the text of the input field, although it would be empty
+        return ''  # TODO maybe it's good to return the text of the input field, although it would be empty
 
 
 class T24SelectFieldCtrl(T24FieldCtrl):
@@ -780,6 +786,7 @@ class T24SelectFieldCtrl(T24FieldCtrl):
         return "css=select[name='fieldName:" + fieldName + "']"
 
     def set_control_text(self, fieldText):
+        self.page.log("Selecting a value from a list...", "DEBUG", False)
         self.page.select_from_list(self.get_locator(self.fieldName), fieldText)
 
     def get_first_value(self):
@@ -804,6 +811,7 @@ class T24RadioFieldCtrl(T24FieldCtrl):
         return "css=input[name='radio:" + tabName + ":" + fieldName + "']"
 
     def set_control_text(self, fieldText):
+        self.page.log("Choosing a value via a radio button...", "DEBUG", False)
         for elem in self.elements:
             val = elem.get_attribute("value")
             if val == fieldText or self._get_radio_button_text(val) == fieldText:
