@@ -629,7 +629,7 @@ class T24RecordInputPage(T24TransactionPage):
     def _select_field_tab(self, fieldCtrl):
         try:
             tabName = fieldCtrl.element.get_attribute("tabname")
-            if tabName and tabName != "mainTab":
+            if tabName and tabName != "mainTab" and tabName != 'tab1':
                 onclickVal = "javascript:changetab('" + tabName + "')"
                 tabElement = self.find_element('xpath=.//a[@onclick="' + onclickVal + '"]')
                 if tabElement.get_attribute("class") == "nonactive-tab":
