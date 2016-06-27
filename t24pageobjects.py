@@ -693,12 +693,17 @@ class T24RecordInputPage(T24TransactionPage):
                 return error or "Text '%s' not found in %s" % (text, self._format_timeout(timeout))
         self._wait_until_no_error(timeout, check_present_src)
 
+    def is_receive_documents_pending(self):
+        try:
+            self.wait_until_page_contains_element("xpath=//select[starts-with(@id,'warningChooser:Have you received')]", 3)
+            return True
+        except:  # catch *all* exceptions
+            return False
+
     # Receive documents (if available) when dealing with T24 transactions
     def receive_documents(self):
         try:
-            self.wait_until_page_contains_element("xpath=//select[starts-with(@id,'warningChooser:Have you received')]", 3)
             self._take_page_screenshot("VERBOSE")
-
             for elementOption in self.find_elements("xpath=//select[starts-with(@id,'warningChooser:Have you received')]/option[@value='RECEIVED']"):
                 elementOption.click()
 

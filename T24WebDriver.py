@@ -98,11 +98,13 @@ class T24WebDriver:
 
         input_page.click_commit_button()
 
-        if oveerrides_handling == "Accept All":
+        if oveerrides_handling == "Accept All" and not input_page.is_txn_complete_displayed_no_wait():
             if input_page.is_accept_overrides_displayed():
                 input_page.click_accept_overrides()
-                if not input_page.is_txn_complete_displayed():
-                    input_page.click_commit_button()
+            if input_page.is_receive_documents_pending():
+                input_page.receive_documents()
+            if not input_page.is_txn_complete_displayed_no_wait():
+                input_page.click_commit_button()
 
         self.last_input_id = input_page.get_id_from_completed_transaction()
         self.last_tx_id = self.last_input_id
