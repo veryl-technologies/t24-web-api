@@ -13,14 +13,11 @@ class T24WebDriverTestCase(unittest.TestCase):
         self.loginpage.open()
         self.homePage = self.loginpage.enter_T24_credentials("INPUTT", "123456")
 
+    def test_menu_corp_customer(self):
+        self.homePage.run_t24_menu_command("User Menu > Customer >Corporate Customer")
 
-
-    def test_menu_command(self):
-        # inputPage = self.homePage.run_t24_menu_command("User Menu > Customer >Corporate Customer")
-        inputPage = self.homePage.run_t24_menu_command("Finance - Operations > Provision>Asset Details")
-
-
-"""
+    def test_menu_asset_details(self):
+        self.homePage.run_t24_menu_command("Finance - Operations > Provision>Asset Details")
 
     def test_input_customer_input(self):
         inputPage = self.homePage.open_input_page_new_record("CUSTOMER,INPUT")
@@ -49,7 +46,6 @@ class T24WebDriverTestCase(unittest.TestCase):
         print "ID of created CUSTOMER record is " + new_id
         inputPage.close_window()
         self.homePage.sign_off()   # sometimes this blows up
-
 
     def test_see(self):
         # seePage = self.homePage.open_see_page("CUSTOMER", "? 'AB' + 'CL'")
@@ -164,8 +160,7 @@ class T24WebDriverTestCase(unittest.TestCase):
         self.homePage.sign_off()
 
         # homePage._enter_t24_command("CUSTOMER S " + accountId)
-        time.sleep(1)
-"""
+        # time.sleep(1)
 
 #    def tearDown(self):
 #        self.loginpage.close()
