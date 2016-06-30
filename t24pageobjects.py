@@ -602,7 +602,7 @@ class T24RecordInputPage(T24TransactionPage):
             maxRetries -= 1
             hiddenFieldTabName = None
             try:
-                element = self.find_element(T24InputFieldCtrl.get_locator(fieldName), False, 0)
+                element = self.find_elements(T24InputFieldCtrl.get_locator(fieldName), False, 0)[0]
                 if element and element.get_attribute("type") != u'hidden':
                     return T24InputFieldCtrl(self, fieldName, element)
                 elif element.get_attribute("type") == u'hidden':
@@ -611,7 +611,7 @@ class T24RecordInputPage(T24TransactionPage):
                 pass
 
             try:
-                element = self.find_element(T24SelectFieldCtrl.get_locator(fieldName), False, 0)
+                element = self.find_elements(T24SelectFieldCtrl.get_locator(fieldName), False, 0)[0]
                 if element:
                     return T24SelectFieldCtrl(self, fieldName, element)
             except:
