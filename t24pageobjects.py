@@ -174,6 +174,10 @@ class T24HomePage(T24Page):
 
     def _find_or_open_enq_window(self, enquiry_name, filter_text):
         if self._find_and_select_suitable_opened_window(enquiry_name, "ENQ", None):
+            info = self._get_current_window_info()
+            if info["isSelection"]:
+                T24EnquiryStartPage().run_enquiry(filter_text)
+
             return
 
         command = "ENQ " + enquiry_name
@@ -182,23 +186,25 @@ class T24HomePage(T24Page):
         self._enter_t24_command("ENQ " + enquiry_name + " " + id)
 
     def _find_and_select_suitable_opened_window(self, version, command, id):
-        return False
-        """NOT IMPLEMENTED
-
-        windowNames = self.get_window_names()
-
-        while len(windowNames) > 1:    # while there are other windows apart from the main
-            self.select_window(windowNames[len(windowNames) - 1])
-            if self._is_current_window_suitable_for_command(version, command, id):
-                return True
-
-            self._get_current_page().close_window()
+        try:
             windowNames = self.get_window_names()
 
-        self._set_current_page(T24HomePage())
-        self.select_window()
-        return False
-        """
+            while len(windowNames) > 1:    # while there are other windows apart from the main
+                self.select_window(windowNames[len(windowNames) - 1])
+                if self._is_current_window_suitable_for_command(version, command, id):
+                    return True
+
+                self._get_current_page().close_window()
+                windowNames = self.get_window_names()
+
+            self._set_current_page(T24HomePage())
+            self.select_window()
+            return False
+
+        except:
+            e = sys.exc_info()[0]
+            self.log("Warning: " + str(e))
+            return False
 
     def _is_current_window_suitable_for_command(self, version, command, id):
         info = self._get_current_window_info()
@@ -425,16 +431,42 @@ class T24EnquiryStartPage(T24Page):
     # Runs a T24 enquiry
     @robot_alias("run_enquiry_no_filters")
     def run_enquiry_no_filters(self):
+        self.run_enquiry(None)
+
+    def run_enquiry(self, filters):
         self.wait_until_page_contains_element(self.selectors["clear selection link"])
         self.wait_until_page_contains_element(self.selectors["find button"])
 
         self.click_element(self.selectors["clear selection link"])
+
+        if filters is not None:
+            self._set_filters(filters)
+
         self.click_element(self.selectors["find button"])
 
         self._take_page_screenshot("VERBOSE")
 
         self._set_current_page(T24EnquiryResultPage())
         return self._get_current_page()
+
+    def _set_filters(self, filters):
+        items = filters.split(' ')
+        items_len = int(len(items) / 3)
+        constraints = []
+        for index in range(items_len):
+            constraints.append(dict (field = items[index * 3], operator = items[index * 3 + 1], value = items[index * 3 + 2]))
+
+        for constraint in constraints:
+            element = self.find_element('xpath=.//input[@type="hidden" and @value="' + constraint["field"] + '"]')
+            id = element.get_attribute("id")
+
+            indexes = id[id.index(":"):]
+
+            element_op = self.find_element("xpath=//select[@name='operand" + indexes + "']/option[@value='" + constraint["operator"] + "']")
+            element_op.click()
+
+            element_val = self.find_element("xpath=//input[@type='text' and @id='value" + indexes + "']")
+            element_val.send_keys(constraint["value"])
 
 
 class T24EnquiryResultPage(T24Page):
