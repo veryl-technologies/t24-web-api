@@ -118,7 +118,10 @@ class T24WebDriver:
     def _set_variable(self, name, value):
         if name.lower().startswith("g_") or name.lower().startswith("global_"):
             BuiltIn().set_global_variable("${" + name + "}", value)
-            VariablesExporter().add(name, value)
+            VariablesExporter().add_global(name, value)
+        elif name.lower().startswith("m_") or name.lower().startswith("module_"):
+            BuiltIn().set_global_variable("${" + name + "}", value)
+            VariablesExporter().add_module(name, value)
         else:
             BuiltIn().set_test_variable("${" + name + "}", value)
 

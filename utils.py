@@ -15,18 +15,26 @@ class Config:
 
 class VariablesExporter:
 
-    def add(self, name, value):
-        output_file = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE}")
+    def add_global(self, name, value):
+        output_file = self._get_output_file("EXPORT_GLOBAL_VARS_TO_FILE")
+        self._add_variable(output_file, name, value)
+
+    def add_module(self, name, value):
+        output_file = self._get_output_file("EXPORT_MODULE_VARS_TO_FILE")
+        self._add_variable(output_file, name, value)
+
+    def _get_output_file(self, var_name):
+        output_file = BuiltIn().get_variable_value("${" + var_name + "}")
         if not output_file:
-            raise Exception('EXPORT_GLOBAL_VARS_TO_FILE not defined.')
+            raise Exception(var_name + ' not defined.')
 
         # within the RF execution session, make sure that the previous variables file is backed up and a new one started
-        output_file_created = BuiltIn().get_variable_value("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}")
+        output_file_created = BuiltIn().get_variable_value("${" + var_name + "_CREATED}")
         if not output_file_created:
             self._backup_previous_and_create_new_file(output_file)
-            BuiltIn().set_global_variable("${EXPORT_GLOBAL_VARS_TO_FILE_CREATED}", output_file)  # just sth non-empty
+            BuiltIn().set_global_variable("${" + var_name + "_CREATED}", output_file)  # just sth non-empty
 
-        self._add_variable(output_file, name, value)
+        return output_file
 
     @staticmethod
     def _add_variable(output_file, name, value):
