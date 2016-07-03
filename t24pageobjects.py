@@ -548,6 +548,8 @@ class T24RecordInputPage(T24TransactionPage):
         "transaction complete": "xpath=//tr[contains(td, 'Txn Complete')]",
     }
 
+    currentTabName = ''
+
     # Checks whether the transaction is completed and if yes, extracts the referenced ID
     @robot_alias("get_id_from_completed_transaction")
     def get_id_from_completed_transaction(self):
@@ -582,7 +584,10 @@ class T24RecordInputPage(T24TransactionPage):
             raise exceptions.NoSuchElementException("Unable to find control for '" + fieldName + "' field name")
 
         self.log("Checking if the field is in another tab...", "DEBUG", False)
-        self._select_field_tab(fieldCtrl)
+        fieldTabName = self._select_field_tab(fieldCtrl)
+        if(fieldTabName != self.currentTabName):
+            self.log("The current tab is '" + fieldTabName + "'.", "INFO", False)
+            self.currentTabName = fieldTabName
 
         if fieldText.upper().startswith("?SELECT-FIRST"):
             fieldText = fieldCtrl.get_first_value()
@@ -603,7 +608,14 @@ class T24RecordInputPage(T24TransactionPage):
             maxRetries -= 1
             hiddenFieldTabName = None
             try:
-                element = self.find_elements(T24InputFieldCtrl.get_locator(fieldName), False, 0)[0]
+                elements = self.find_elements(T24InputFieldCtrl.get_locator(fieldName), False, 0)
+                if elements:
+                    if len(elements) == 1:
+                        element = elements[0]
+                    else:
+                        self.log(str(len(elements)) + " elements matching field '" + fieldName + "'!", "INFO", False)
+                        element = elements[0]  # choose first, though maybe in the current tab is better (if any)
+
                 if element and element.get_attribute("type") != u'hidden':
                     return T24InputFieldCtrl(self, fieldName, element)
                 elif element.get_attribute("type") == u'hidden':
@@ -630,14 +642,17 @@ class T24RecordInputPage(T24TransactionPage):
     def _select_field_tab(self, fieldCtrl):
         try:
             tabName = fieldCtrl.element.get_attribute("tabname")
-            if tabName and tabName != "mainTab" and tabName != 'tab1':
-                onclickVal = "javascript:changetab('" + tabName + "')"
-                tabElement = self.find_element('xpath=.//a[@onclick="' + onclickVal + '"]')
-                if tabElement.get_attribute("class") == "nonactive-tab":
-                    self.log("Activating tab " + tabName, "DEBUG", False)
-                    tabElement.click()
+            if tabName and tabName != self.currentTabName and tabName != "mainTab":
+                if tabName != 'tab1' or self.currentTabName:  # assume we start in 'tab1' and only go back if necessary
+                    onclickVal = "javascript:changetab('" + tabName + "')"
+                    tabElement = self.find_element('xpath=.//a[@onclick="' + onclickVal + '"]')
+                    if tabElement.get_attribute("class") == "nonactive-tab":
+                        self.log("Activating tab '" + tabName + "'...", "DEBUG", False)
+                        tabElement.click()
+            return tabName
         except:
             pass    # not essential action
+            return None
 
     # Clicks the Commit Button when dealing with T24 transactions
     def click_commit_button(self):
@@ -777,7 +792,9 @@ class T24InputFieldCtrl(T24FieldCtrl):
 
     def set_control_text(self, fieldText):
         self.page.log("Setting a value to a text field...", "DEBUG", False)
-        self.page.input_text(self.get_locator(self.fieldName), fieldText)
+        self.element.clear()
+        self.element.send_keys(fieldText)
+        #self.page.input_text(self.get_locator(self.fieldName), fieldText)
 
     def get_first_value(self):
         return ''  # TODO maybe it's good to return the text of the input field, although it would be empty
