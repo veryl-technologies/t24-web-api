@@ -695,11 +695,12 @@ class T24RecordInputPage(T24TransactionPage):
         self.click_element(self._get_commit_locator())
         return self
 
-    def is_accept_overrides_displayed(self):
+    def is_accept_overrides_displayed_no_wait(self):
         try:
-            self.wait_until_page_contains_element("link=Accept Overrides", 3)
-            return True
-        except: # catch *all* exceptions
+            if self.find_element("xpath=.//*[contains(text(),'Accept Overrides')]", False, 0) is not None:
+                return True
+            return False
+        except:
             return False
 
     # Clicks the Accept Overrides link (if available) when dealing with T24 transactions
@@ -826,7 +827,6 @@ class T24InputFieldCtrl(T24FieldCtrl):
         self.page.log("Setting a value to a text field...", "DEBUG", False)
         self.element.clear()
         self.element.send_keys(fieldText)
-        #self.page.input_text(self.get_locator(self.fieldName), fieldText)
 
     def get_first_value(self):
         return ''  # TODO maybe it's good to return the text of the input field, although it would be empty
