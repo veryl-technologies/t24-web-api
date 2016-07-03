@@ -60,6 +60,7 @@ class T24Page(Page):
             pass
 
     def evaluate_value(self, fieldText):
+        fieldText = str(fieldText)
         if fieldText.upper().startswith("?AUTO"):
             fieldText = BuiltinFunctions.get_unique_new_customer_mnemonic()
         elif fieldText.startswith("?"):
