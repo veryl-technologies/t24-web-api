@@ -4,6 +4,7 @@ from T24ExecutionContext import T24ExecutionContext
 from robot.libraries.BuiltIn import BuiltIn
 from robot.libraries import Dialogs
 from utils import VariablesExporter
+from decimal import Decimal
 import fnmatch
 
 
@@ -291,7 +292,7 @@ class T24WebDriver:
         self._make_home_page_default()
 
     def _validate_field_value(self, column, op, expected_value, actual_value, errors):
-        if op == "EQ" and expected_value != actual_value:
+        if op == "EQ" and expected_value != actual_value and not self._are_equal_as_numbers(expected_value, actual_value):
             errors.append(
                 "Field '" + column + "' has expected value '" + expected_value + "' but the actual value is '" + actual_value + "'")
         elif op == "LK" and not self._is_match_LK(actual_value, expected_value):
@@ -307,6 +308,23 @@ class T24WebDriver:
         else:
             self._log_info("For field '" + column + "' verified that the actual value '" + actual_value + "' " +
                            self._get_operator_friendly_name(op) + " the expected value '" + expected_value + "'")
+
+    @staticmethod
+    def _are_equal_as_numbers(expected_value, actual_value):
+        try:
+            return T24WebDriver._str_to_decimal(expected_value) == T24WebDriver._str_to_decimal(actual_value)
+        except:
+            return False
+
+    @staticmethod
+    def _str_to_decimal(val):
+        if "," in val and '.' in val:
+            val = val.replace(",", "")
+
+        if "," in val and '.' not in val:
+            val = val.replace(",", ".")
+
+        return Decimal(val)
 
     def _is_match_LK(self, value, pattern):
         return fnmatch.fnmatchcase(value, pattern.replace("...", "*"))
