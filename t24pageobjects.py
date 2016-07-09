@@ -166,11 +166,11 @@ class T24HomePage(T24Page):
         self._set_current_page(T24LoginPage())
         return self._get_current_page()
 
-    def _find_or_open_app_window(self, version, command, id):
-        if self._find_and_select_suitable_opened_window(version, command, id):
+    def _find_or_open_app_window(self, version, command, record_id):
+        if self._find_and_select_suitable_opened_window(version, command, record_id):
             return
 
-        self._enter_t24_command(version + " " + command + " " + id)
+        self._enter_t24_command(version + " " + command + " " + record_id)
 
     def _find_or_open_enq_window(self, enquiry_name, filter_text):
         if self._find_and_select_suitable_opened_window(enquiry_name, "ENQ", None):
@@ -184,13 +184,13 @@ class T24HomePage(T24Page):
             command += " " + filter_text
         self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
 
-    def _find_and_select_suitable_opened_window(self, version, command, id):
+    def _find_and_select_suitable_opened_window(self, version, command, record_id):
         try:
             windowNames = self.get_window_names()
 
             while len(windowNames) > 1:  # while there are other windows apart from the main
                 self.select_window(windowNames[len(windowNames) - 1])
-                if self._is_current_window_suitable_for_command(version, command, id):
+                if self._is_current_window_suitable_for_command(version, command, record_id):
                     return True
 
                 self._get_current_page().close_window()
@@ -205,7 +205,7 @@ class T24HomePage(T24Page):
             self.log("Error finding suitable window: " + str(e), "WARN")
             return False
 
-    def _is_current_window_suitable_for_command(self, version, command, id):
+    def _is_current_window_suitable_for_command(self, version, command, record_id):
         info = self._get_current_window_info()
 
         if info['isCommited']:
@@ -213,9 +213,9 @@ class T24HomePage(T24Page):
 
         if info is not None and info['command'] == command and info['version'] == version:
             if command == "I" or command == "A" or command == "S":
-                if id is not None and len(id) > 0 and id != "F3":
+                if record_id is not None and len(record_id) > 0 and record_id != "F3":
                     # transaction ID must match
-                    if info['transactionId'] != id:
+                    if info['transactionId'] != record_id:
                         return False
 
             return True
