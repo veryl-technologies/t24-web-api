@@ -182,7 +182,7 @@ class T24HomePage(T24Page):
         command = "ENQ " + enquiry_name
         if filter_text:
             command += " " + filter_text
-        self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
+        self._enter_t24_command(command)
 
     def _find_and_select_suitable_opened_window(self, version, command, record_id):
         try:
