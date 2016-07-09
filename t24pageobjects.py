@@ -177,19 +177,18 @@ class T24HomePage(T24Page):
             info = self._get_current_window_info()
             if info["isSelection"]:
                 T24EnquiryStartPage().run_enquiry(filter_text)
-
             return
 
         command = "ENQ " + enquiry_name
         if filter_text:
             command += " " + filter_text
-        self._enter_t24_command("ENQ " + enquiry_name + " " + id)
+        self._enter_t24_command("ENQ " + enquiry_name + " " + filter_text)
 
     def _find_and_select_suitable_opened_window(self, version, command, id):
         try:
             windowNames = self.get_window_names()
 
-            while len(windowNames) > 1:    # while there are other windows apart from the main
+            while len(windowNames) > 1:  # while there are other windows apart from the main
                 self.select_window(windowNames[len(windowNames) - 1])
                 if self._is_current_window_suitable_for_command(version, command, id):
                     return True
@@ -203,7 +202,7 @@ class T24HomePage(T24Page):
 
         except:
             e = sys.exc_info()[0]
-            self.log("Warning: " + str(e))
+            self.log("Error finding suitable window: " + str(e), "WARN")
             return False
 
     def _is_current_window_suitable_for_command(self, version, command, id):
@@ -785,7 +784,7 @@ class T24FieldCtrl:
         if isHotField:
             self._leave_focus()
             time.sleep(1)
-            # wait for a reload (necessary after setting hot fields), but maybe do it only if the field is hot [hot="Y"]
+            # wait for a reload (necessary after setting hot fields)
             self.page.wait_until_page_contains_element(self.page._get_commit_locator())
         elif isAutoLaunchEnquiry:
             windowsCount = len(self.page.get_window_names())
@@ -812,7 +811,7 @@ class T24FieldCtrl:
 
     def _leave_focus(self):
         if self.element:
-            self.element.send_keys(Keys.TAB);
+            self.element.send_keys(Keys.TAB)
 
 
 class T24InputFieldCtrl(T24FieldCtrl):
