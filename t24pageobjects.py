@@ -172,17 +172,17 @@ class T24HomePage(T24Page):
 
         self._enter_t24_command(version + " " + command + " " + record_id)
 
-    def _find_or_open_enq_window(self, enquiry_name, filter_text):
+    def _find_or_open_enq_window(self, enquiry_name, enquiry_filters):
         if self._find_and_select_suitable_opened_window(enquiry_name, "ENQ", None):
             info = self._get_current_window_info()
             if info["isSelection"]:
-                T24EnquiryStartPage().run_enquiry(filter_text)
+                T24EnquiryStartPage().run_enquiry(enquiry_filters)
             return
 
-        command = "ENQ " + enquiry_name
-        if filter_text:
-            command += " " + filter_text
-        self._enter_t24_command(command)
+        self._enter_t24_command("ENQ " + enquiry_name)
+
+        if enquiry_filters:
+            T24EnquiryStartPage().run_enquiry(enquiry_filters)
 
     def _find_and_select_suitable_opened_window(self, version, command, record_id):
         try:
@@ -306,8 +306,7 @@ class T24HomePage(T24Page):
             self._set_current_page(enq_start_page)
             return enq_start_page.run_enquiry_no_filters()
         else:
-            filter_text = ' '.join([str(f) for f in enquiry_filters])
-            self._find_or_open_enq_window(enquiry_name, filter_text)
+            self._find_or_open_enq_window(enquiry_name, enquiry_filters)
             self._set_current_page(T24EnquiryResultPage())
             return self._get_current_page()
 
@@ -430,16 +429,16 @@ class T24EnquiryStartPage(T24Page):
     # Runs a T24 enquiry
     @robot_alias("run_enquiry_no_filters")
     def run_enquiry_no_filters(self):
-        self.run_enquiry(None)
+        return self.run_enquiry(None)
 
-    def run_enquiry(self, filters):
+    def run_enquiry(self, enquiry_filters):
         self.wait_until_page_contains_element(self.selectors["clear selection link"])
         self.wait_until_page_contains_element(self.selectors["find button"])
 
         self.click_element(self.selectors["clear selection link"])
 
-        if filters is not None:
-            self._set_filters(filters)
+        if enquiry_filters is not None:
+            self._set_filters(enquiry_filters)
 
         self.click_element(self.selectors["find button"])
 
@@ -449,23 +448,31 @@ class T24EnquiryStartPage(T24Page):
         return self._get_current_page()
 
     def _set_filters(self, filters):
-        items = filters.split(' ')
-        items_len = int(len(items) / 3)
-        constraints = []
-        for index in range(items_len):
-            constraints.append(dict (field = items[index * 3], operator = items[index * 3 + 1], value = items[index * 3 + 2]))
+        for f in filters:
+            field, oper, value = self._split_enquiry_filter(f)
 
-        for constraint in constraints:
-            element = self.find_element('xpath=.//input[@type="hidden" and @value="' + constraint["field"] + '"]')
+            element = self.find_element('xpath=.//input[@type="hidden" and @value="' + field + '"]')
             id = element.get_attribute("id")
 
             indexes = id[id.index(":"):]
 
-            element_op = self.find_element("xpath=//select[@name='operand" + indexes + "']/option[@value='" + constraint["operator"] + "']")
+            element_op = self.find_element("xpath=//select[@name='operand" + indexes + "']/option[@value='" + oper + "']")
             element_op.click()
 
             element_val = self.find_element("xpath=//input[@type='text' and @id='value" + indexes + "']")
-            element_val.send_keys(constraint["value"])
+            element_val.send_keys(value)
+
+    def _split_enquiry_filter(self, filter):
+        operators = ["EQ", "LK", "UL", "NE", "GT", "GE", "LT", "LE", "RG", "NR", "CT", "NC", "BW", "EW", "DNBW", "DNEW", "SAID"]
+
+        for op in operators:
+            try:
+                idx = filter.index(" " + op + " ")
+                return filter[:idx], op, filter[idx + len(" " + op + " "):]
+            except:
+                pass
+
+        raise Exception("Invalid enquiry filter: '" + filter + "'")
 
 
 class T24EnquiryResultPage(T24Page):
