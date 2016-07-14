@@ -168,6 +168,15 @@ class T24WebDriverTestCase(unittest.TestCase):
         result = enqResultPage.get_values_from_enquiry_result([1,2,4], filters)
         assert (result and result[1] == "CIBC")
 
+    def test_enq_action(self):
+        # get an existing customer ID
+        filters = ["Customer No EQ 111615", "CUSTOMER.NO LK 11161..."]
+        enqResultPage = self.homePage.open_t24_enquiry("%CUSTOMER", filters)
+
+        # result = enqResultPage.get_values_from_enquiry_result([1,2,4], filters)
+        is_success, error_message = enqResultPage.execute_enquiry_action(filters, "Customer Position")
+        assert (is_success)
+
 #    def tearDown(self):
 #        self.loginpage.close()
 

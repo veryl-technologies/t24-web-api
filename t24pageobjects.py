@@ -539,6 +539,24 @@ class T24EnquiryResultPage(T24Page):
 
         return res
 
+    # Executes enquiry action on first matching row
+    @robot_alias("execute_enquiry_action")
+    def execute_enquiry_action(self, enquiry_constraints, action):
+        self.select_window("self")
+        self.wait_until_page_contains_element(self.selectors["refresh button"])
+
+        row_idx = self._find_first_matching_enquiry_row(enquiry_constraints)
+        if row_idx is None:
+            return False, "No matching enquiry rows found"
+
+        try:
+            element = self.find_element("xpath=.//tr[@id='r" + str(row_idx) + "']/td/a[@title='" + action + "']", False, 0)
+            element.click()
+        except:
+            return False, "Unable to find action element '" + action + "' on enquiry result row: " + str(row_idx)
+
+        return True, ""
+
     def _find_first_matching_enquiry_row(self, enquiry_constraints):
         if enquiry_constraints is None:
             return 1

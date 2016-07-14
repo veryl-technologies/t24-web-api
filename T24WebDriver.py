@@ -287,7 +287,9 @@ class T24WebDriver:
                 BuiltIn().fail("\n".join(errors))
 
         else:
-            raise NotImplementedError("Not implemented execution actions on enquiry results. Can't apply action " + action)
+            is_success, err_msg = enq_res_page.execute_enquiry_action(enquiry_constraints, action)
+            if not is_success:
+                raise Exception(err_msg)
 
         # go back to home screen
         enq_res_page.close_window()
