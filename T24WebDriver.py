@@ -266,7 +266,9 @@ class T24WebDriver:
             enq_res_columns, validation_operators, validation_values = self._parse_validation_rules(action_parameters)
 
             # read the data from the enquiry result
-            values = enq_res_page.get_values_from_enquiry_result(enq_res_columns)
+            values = enq_res_page.get_values_from_enquiry_result(enq_res_columns, enquiry_constraints)
+            if not values:
+                raise Exception('No matching enquiry rows found')
 
             # need to save data into RF variables
             for i, c in enumerate(enq_res_columns):

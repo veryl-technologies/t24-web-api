@@ -162,6 +162,12 @@ class T24WebDriverTestCase(unittest.TestCase):
         # homePage._enter_t24_command("CUSTOMER S " + accountId)
         # time.sleep(1)
 
+    def test_enq_post_filters(self):
+        filters = ["Name EQ Canadian Imperial Bank Of Commerce", "SECTOR NE 1000", "INDUSTRY GT 500"]
+        enqResultPage = self.homePage.open_t24_enquiry("%CUSTOMER", filters)
+        result = enqResultPage.get_values_from_enquiry_result([1,2,4], filters)
+        assert (result and result[1] == "CIBC")
+
 #    def tearDown(self):
 #        self.loginpage.close()
 

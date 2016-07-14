@@ -83,6 +83,24 @@ class T24Page(Page):
     def _get_commit_locator(self):
         return "css=img[alt=\"Commit the deal\"]"
 
+    def _split_enquiry_filter(self, filter):
+        operators = ["EQ", "LK", "UL", "NE", "GT", "GE", "LT", "LE", "RG", "NR", "CT", "NC", "BW", "EW", "DNBW", "DNEW", "SAID"]
+
+        for op in operators:
+            try:
+                idx = filter.index(" " + op + " ")
+                return filter[:idx], op, filter[idx + len(" " + op + " "):]
+            except:
+                pass
+
+        raise Exception("Invalid enquiry filter: '" + filter + "'")
+
+    def _evaluate_comparison(self, value, oper, testValue):
+        if oper == "EQ":
+            return value == testValue
+
+        raise NotImplementedError("'_evaluate_comparison' is not implemented of operator: '" + oper + "'")
+
 
 class T24LoginPage(T24Page):
     """ Models the T24 login page"""
@@ -451,8 +469,12 @@ class T24EnquiryStartPage(T24Page):
         for f in filters:
             field, oper, value = self._split_enquiry_filter(f)
 
-            element = self.find_element('xpath=.//input[@type="hidden" and @value="' + field + '"]')
-            id = element.get_attribute("id")
+            try:
+                element = self.find_element('xpath=.//input[@type="hidden" and @value="' + field + '"]', False, 0)
+                id = element.get_attribute("id")
+            except:
+                # if field name not found probably this would be used as post filter
+                continue
 
             indexes = id[id.index(":"):]
 
@@ -461,19 +483,6 @@ class T24EnquiryStartPage(T24Page):
 
             element_val = self.find_element("xpath=//input[@type='text' and @id='value" + indexes + "']")
             element_val.send_keys(value)
-
-    def _split_enquiry_filter(self, filter):
-        operators = ["EQ", "LK", "UL", "NE", "GT", "GE", "LT", "LE", "RG", "NR", "CT", "NC", "BW", "EW", "DNBW", "DNEW", "SAID"]
-
-        for op in operators:
-            try:
-                idx = filter.index(" " + op + " ")
-                return filter[:idx], op, filter[idx + len(" " + op + " "):]
-            except:
-                pass
-
-        raise Exception("Invalid enquiry filter: '" + filter + "'")
-
 
 class T24EnquiryResultPage(T24Page):
     """ Models the T24 Enquiry Result Page"""
@@ -508,7 +517,7 @@ class T24EnquiryResultPage(T24Page):
 
     # Gets the first ID of an enquiry result
     @robot_alias("get_values_from_enquiry_result")
-    def get_values_from_enquiry_result(self, column_indexes):
+    def get_values_from_enquiry_result(self, column_indexes, enquiry_constraints):
         self.select_window("self")
         self.wait_until_page_contains_element(self.selectors["refresh button"])
 
@@ -518,13 +527,61 @@ class T24EnquiryResultPage(T24Page):
         #if not self.wait_until_page_contains_element(self.selectors["first text column in grid"], 5):
         #   return ""  # doesn't work
 
+        row_idx = self._find_first_matching_enquiry_row(enquiry_constraints)
+        if row_idx is None:
+            return []
+
         res = []
         for c in column_indexes:
             index = int(c) + 1
-            val = self._get_text("css=#r1 > td:nth-child(" + str(index) + ")")  # TODO error handling (throw better error)
+            val = self._get_text("css=#r" + str(row_idx) + " > td:nth-child(" + str(index) + ")")  # TODO error handling (throw better error)
             res.append(val)
 
         return res
+
+    def _find_first_matching_enquiry_row(self, enquiry_constraints):
+        if enquiry_constraints is None:
+            return 1
+
+        enquiry_constraints_by_idx = []
+
+        header = self._enumerate_enquiry_header()
+        for filter in enquiry_constraints:
+            field, oper, value = self._split_enquiry_filter(filter)
+            header_item = [tup for tup in header if tup[1] == field]
+            if len(header_item) > 0:
+                idx = header_item[0][0]
+                enquiry_constraints_by_idx.append( (idx, oper, value) )
+
+        # todo if there are pages and we are not able to find the row we have to move to the next page
+        for row_idx in range(1, 100):
+            try:
+                self.find_element("css=#r" + str(row_idx))
+            except:
+                break   # no more rows
+
+            matches = True
+            for c in enquiry_constraints_by_idx:
+                val = self._get_text("css=#r" + str(row_idx) + " > td:nth-child(" + str(c[0]) + ")")
+                if not self._evaluate_comparison(val, c[1], c[2]):
+                    matches = False
+                    break
+
+            if matches:
+                return row_idx
+
+        return None
+
+    def _enumerate_enquiry_header(self):
+        result = []
+        for i in range(1,200,1):
+            try:
+                elem = self.find_element("xpath=.//th[@id='columnHeaderText" + str(i) + "']", False, 0)
+                result.append((i, elem.text))
+            except:
+                break
+
+        return result
 
 
 class T24TransactionPage(T24Page):
