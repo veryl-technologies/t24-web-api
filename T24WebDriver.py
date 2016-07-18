@@ -286,14 +286,14 @@ class T24WebDriver:
             if errors:
                 BuiltIn().fail("\n".join(errors))
 
+            # go back to home screen
+            enq_res_page.close_window()
+            self._make_home_page_default()
+
         else:
             is_success, err_msg = enq_res_page.execute_enquiry_action(enquiry_constraints, action)
             if not is_success:
                 raise Exception(err_msg)
-
-        # go back to home screen
-        enq_res_page.close_window()
-        self._make_home_page_default()
 
     def _validate_field_value(self, column, op, expected_value, actual_value, errors):
         if op == "EQ" and expected_value != actual_value and not self._are_equal_as_numbers(expected_value, actual_value):

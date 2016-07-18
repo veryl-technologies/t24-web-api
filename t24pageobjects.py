@@ -8,6 +8,7 @@ from selenium.webdriver.common.keys import Keys
 
 from T24OperationType import T24OperationType
 from T24ExecutionContext import T24ExecutionContext
+from T24CosObjects import *
 import BuiltinFunctions
 from utils import Config
 from datetime import datetime
@@ -101,6 +102,31 @@ class T24Page(Page):
 
         raise NotImplementedError("'_evaluate_comparison' is not implemented of operator: '" + oper + "'")
 
+    def _enumerate_all_frames(self):
+        res = []
+        self._enumerate_frames_recursively(res, [])
+        return res
+
+    def _enumerate_frames_recursively(self, res, parent_frames):
+        elements = self.find_elements("xpath=.//frame", False, 0)
+        local_res = [CosFrame(e, parent_frames) for e in elements]
+
+        res.extend(local_res)
+
+        for r in local_res:
+            parents = parent_frames[:]
+            parents.append(r.id)
+
+            self.unselect_frame()
+
+            for parent in parents:
+                self.select_frame(parent)
+
+            res.extend([CosDivPane(p, parents) for p in self.find_elements("xpath=.//div[starts-with(@id,'pane_')]", False, 0)])
+
+            self._enumerate_frames_recursively(res, parents)
+
+        return res
 
 class T24LoginPage(T24Page):
     """ Models the T24 login page"""
@@ -254,7 +280,7 @@ class T24HomePage(T24Page):
 
             if T24TransactionPage().commit_btn_enabled():
                 return dict(command = "I", version = application + version, transactionId = id, isCommited = False)
-            elif T24TransactionPage.autorize_btn_enabled():
+            elif T24TransactionPage().autorize_btn_enabled():
                 return dict(command = "A", version = application + version, transactionId = id, isCommited = False)
             else:
                 return dict(command = "S", version = application + version, transactionId = id, isCommited = False)
@@ -265,10 +291,12 @@ class T24HomePage(T24Page):
                 return dict(command = "ENQ", version = enqname, isSelection = True, transactionId = '', isCommited = False)
             except:
                 try:
+                    # todo - have to select frame this is cos!!!
+                    # frames = self._enumerate_all_frames()
                     form = self.find_element("xpath=.//form[@id='enquiry']", False, 0)
                     version = form.find_element_by_xpath("input[@id='version']").get_attribute("value")
                     return dict(command = "ENQ", version = version, isSelection = False, transactionId = '', isCommited = False)
-                except:
+                except Exception as e:
                     pass
 
         return None
@@ -346,7 +374,9 @@ class T24HomePage(T24Page):
         if len(elements) == 0:
             raise exceptions.NoSuchElementException("Unable to find menu path '" + menu_items + "'")
         elif len(elements) > 1:
-            raise exceptions.NoSuchElementException("More than one menu items with given path found: '" + menu_items + "'")
+            # raise exceptions.NoSuchElementException("More than one menu items with given path found: '" + menu_items + "'")
+            # for now we will result the first match
+            pass
 
         menu_element = elements[0]
 
@@ -422,6 +452,7 @@ class T24HomePage(T24Page):
         self._add_operation(T24OperationType.SeeRecord)
 
         record_id = self.evaluate_value(record_id)
+
         self._find_or_open_app_window(version, "S", record_id)
 
         self._set_current_page(T24RecordSeePage())
@@ -550,8 +581,12 @@ class T24EnquiryResultPage(T24Page):
             return False, "No matching enquiry rows found"
 
         try:
-            element = self.find_element("xpath=.//tr[@id='r" + str(row_idx) + "']/td/a[@title='" + action + "']", False, 0)
+            if unicode(str(action), 'utf-8').isnumeric():
+                element = self.find_element("css=#r" + str(row_idx) + " > td:nth-child(" + str(action) + ") > a", False, 0)
+            else:
+                element = self.find_element("xpath=.//tr[@id='r" + str(row_idx) + "']/td/a[@title='" + action + "']", False, 0)
             element.click()
+            time.sleep(2)
         except:
             return False, "Unable to find action element '" + action + "' on enquiry result row: " + str(row_idx)
 
