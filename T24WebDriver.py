@@ -100,7 +100,7 @@ class T24WebDriver:
         input_page.click_commit_button()
 
         if oveerrides_handling == "Accept All" and not input_page.is_txn_complete_displayed_no_wait():
-            if input_page.is_receive_documents_pending():
+            if input_page.is_receive_documents_pending_no_wait():
                 input_page.receive_documents()
             if input_page.is_accept_overrides_displayed_no_wait():
                 input_page.click_accept_overrides()
