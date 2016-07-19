@@ -238,7 +238,7 @@ class T24WebDriver:
     def _normalize_filter(self, param):
         # Currently in RIDE we use filters like =EQ:= , but the logic expects just EQ
         if ":=" in param:
-            return param.replace(":=", "", 1).replace(":", "", 1)
+            return param.replace(":=", "", 1).replace(" :", " ", 1)
         return param
 
     def _get_validation_rule_parts(self, validation_rule, operator):

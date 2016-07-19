@@ -673,13 +673,34 @@ class T24RecordSeePage(T24TransactionPage):
     def get_T24_field_value(self, fieldName):
         if fieldName == "ID" or fieldName == "@ID":
             fieldValue = self._get_value("xpath=.//input[@id='transactionId' and preceding-sibling::span]")
-        elif Config.get_t24_version() >= 14:
-            fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../../..//*[3]//*")
         else:
-            fieldValue = self._get_text("xpath=.//*[@id='fieldCaption:" + fieldName + "']/../..//*[3]//*")
+            fieldValue = self._get_T24_field_value_among_many(fieldName)
         self.log("Retrieved value for field '" + fieldName + "' is '" + fieldValue + "'", "INFO", False)
         return fieldValue
 
+    def _get_T24_field_value_among_many(self, fieldName):
+        parts = fieldName.rpartition(':')  # we expect AAA:1, AAA:2 for multivalues or just AAA for normal fields
+        mainFieldName = parts[0]
+        indexPart = parts[2]
+
+        if Config.get_t24_version() >= 14:
+            locator = "xpath=.//*[@id='fieldCaption:" + mainFieldName + "']/../../..//*[3]//*"
+        else:
+            locator = "xpath=.//*[@id='fieldCaption:" + mainFieldName + "']/../..//*[3]//*"
+
+        isSimpleField = not indexPart.isdigit()  # simple fields should have a single element matched in the HTML
+        elements = self._element_find(locator, isSimpleField, True)
+        if elements is None:
+            raise ValueError("Could not find elements for field '" + mainFieldName + "'.")
+
+        if isSimpleField:
+            return elements[0].text
+        else:
+            index = int(indexPart) - 1
+            if index < len(elements):
+                return elements[index].text
+            else:
+                raise ValueError("Could not find element at index " + indexPart + " for field '" + mainFieldName + "'.")
 
 class T24RecordInputPage(T24TransactionPage):
     """ Models the T24 Record Input Page"""
