@@ -680,8 +680,12 @@ class T24RecordSeePage(T24TransactionPage):
 
     def _get_T24_field_value_among_many(self, fieldName):
         parts = fieldName.rpartition(':')  # we expect AAA:1, AAA:2 for multivalues or just AAA for normal fields
-        mainFieldName = parts[0]
-        indexPart = parts[2]
+        if parts[1] == ':':
+            mainFieldName = parts[0]
+            indexPart = parts[2]
+        else:
+            mainFieldName = fieldName
+            indexPart = ''
 
         if Config.get_t24_version() >= 14:
             locator = "xpath=.//*[@id='fieldCaption:" + mainFieldName + "']/../../..//*[3]//*"
@@ -694,7 +698,7 @@ class T24RecordSeePage(T24TransactionPage):
             raise ValueError("Could not find elements for field '" + mainFieldName + "'.")
 
         if isSimpleField:
-            return elements[0].text
+            return elements.text
         else:
             index = int(indexPart) - 1
             if index < len(elements):
