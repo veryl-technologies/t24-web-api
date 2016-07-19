@@ -860,7 +860,7 @@ class T24RecordInputPage(T24TransactionPage):
 
     def is_receive_documents_pending_no_wait(self):
         try:
-            if self.find_element("xpath=//select[starts-with(@id,'warningChooser:Have you received')]", False, 0):
+            if self.find_elements("xpath=//select[starts-with(@id,'warningChooser:Have you received')]", False, 0):
                 return True
             return False
         except:
