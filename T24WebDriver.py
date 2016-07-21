@@ -82,7 +82,7 @@ class T24WebDriver:
 
         self.home_page.run_t24_menu_command(menu_items)
 
-    def create_or_amend_t24_record(self, app_version, record_id, record_field_values, oveerrides_handling=None, error_handling=None, post_verification=None):
+    def create_or_amend_t24_record(self, app_version, record_id, record_field_values, overrides_handling=None, error_handling=None, post_verification=None):
         """
         Creates a T24 record with the specified fields if 'record_id' is not specified, otherwise amends it
         """
@@ -99,7 +99,7 @@ class T24WebDriver:
 
         input_page.click_commit_button()
 
-        if oveerrides_handling == "Accept All" and not input_page.is_txn_complete_displayed_no_wait():
+        if overrides_handling != "Fail" and not input_page.is_txn_complete_displayed_no_wait():
             if input_page.is_receive_documents_pending_no_wait():
                 input_page.receive_documents()
             if input_page.is_accept_overrides_displayed_no_wait():
