@@ -177,6 +177,26 @@ class T24WebDriverTestCase(unittest.TestCase):
         is_success, error_message = enqResultPage.execute_enquiry_action(filters, "Customer Position")
         assert (is_success)
 
+    def test_enq_action_1(self):
+        enqResultPage = self.homePage.open_t24_enquiry("%DE.O.HEADER", ["@ID EQ D20140515026657053102"])
+
+        is_success, error_message = enqResultPage.execute_enquiry_action(["@ID EQ D20140515026657053102"], 1)
+
+        seePage = self.homePage.open_see_page("DE.O.HEADER", "")
+        print seePage.get_T24_field_value("ACCOUNT.NUMBER")
+        print seePage.get_T24_field_value("APPLICATION")
+
+        assert (is_success)
+
+    def test_cos_with_inner_menu(self):
+        self.homePage.run_t24_menu_command("Home Page - Customer Service Agent")
+        self.homePage.run_t24_menu_command("Create SME Customer")
+
+        inputPage = self.homePage.open_input_page_new_record("CUSTOMER,SME")
+        inputPage.set_T24_field_value("NATIONALITY", "Baba jaga 1")
+
+        # inputPage.click_commit_button()
+
 #    def tearDown(self):
 #        self.loginpage.close()
 

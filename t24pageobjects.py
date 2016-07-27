@@ -128,6 +128,15 @@ class T24Page(Page):
 
         return res
 
+    def _select_cos_frame(self, cos_frame):
+        self.unselect_frame()
+
+        for parent in cos_frame.parent_frames:
+            self.select_frame(parent)
+
+        self.select_frame(cos_frame.id)
+
+
 class T24LoginPage(T24Page):
     """ Models the T24 login page"""
 
@@ -228,13 +237,41 @@ class T24HomePage(T24Page):
         if enquiry_filters:
             T24EnquiryStartPage().run_enquiry(enquiry_filters)
 
+    def _find_or_open_menu_window(self, items):
+        xpath = self._build_menu_command_xpath_full(items)
+
+        if self._find_and_select_suitable_opened_window(None, "MENU", xpath):
+            elements = self.find_elements(xpath, False, 0)
+            return elements
+
+        self._make_sure_home_page_is_active()
+
+        self.select_window()
+
+        self.select_frame(self.selectors["menu frame"])
+
+        elements = self.find_elements(xpath, False, 0)
+        return elements;
+
     def _find_and_select_suitable_opened_window(self, version, command, record_id):
         try:
             windowNames = self.get_window_names()
 
             while len(windowNames) > 1:  # while there are other windows apart from the main
                 self.select_window(windowNames[len(windowNames) - 1])
-                if self._is_current_window_suitable_for_command(version, command, record_id):
+                frames = self._enumerate_all_frames()
+                if frames and len(frames):
+                    for f in frames:
+                        if isinstance(f, CosDivPane):
+                            continue
+
+                        self._select_cos_frame(f)
+                        if command == "MENU" and f.get_type() == "menu":
+                            if len(self.find_elements(record_id, False, 0)) > 0:
+                                return True
+                        elif self._is_current_window_suitable_for_command(version, command, record_id):
+                            return True
+                elif self._is_current_window_suitable_for_command(version, command, record_id):
                     return True
 
                 self._get_current_page().close_window()
@@ -251,6 +288,9 @@ class T24HomePage(T24Page):
 
     def _is_current_window_suitable_for_command(self, version, command, record_id):
         info = self._get_current_window_info()
+
+        if not info:
+            return False
 
         if info['isCommited']:
             return False
@@ -286,16 +326,15 @@ class T24HomePage(T24Page):
                 return dict(command = "S", version = application + version, transactionId = id, isCommited = False)
         except:
             try:
-                form = self.find_element("xpath=.//form[@id='enqsel']", False, 0) # enquiry form don't exists when on selection
-                enqname = form.find_element_by_xpath("input[@id='enqname']").get_attribute("value")
-                return dict(command = "ENQ", version = enqname, isSelection = True, transactionId = '', isCommited = False)
+                self.find_element("xpath=.//form[@id='enquiryData']", False, 0)
+                form = self.find_element("xpath=.//form[@id='enquiry']", False, 0)
+                version = form.find_element_by_xpath("input[@name='version']").get_attribute("value")
+                return dict(command = "ENQ", version = version, isSelection = False, transactionId = '', isCommited = False)
             except:
                 try:
-                    # todo - have to select frame this is cos!!!
-                    # frames = self._enumerate_all_frames()
-                    form = self.find_element("xpath=.//form[@id='enquiry']", False, 0)
-                    version = form.find_element_by_xpath("input[@id='version']").get_attribute("value")
-                    return dict(command = "ENQ", version = version, isSelection = False, transactionId = '', isCommited = False)
+                    form = self.find_element("xpath=.//form[@id='enqsel']", False, 0)
+                    enqname = form.find_element_by_xpath("input[@id='enqname']").get_attribute("value")
+                    return dict(command = "ENQ", version = enqname, isSelection = True, transactionId = '', isCommited = False)
                 except Exception as e:
                     pass
 
@@ -359,18 +398,14 @@ class T24HomePage(T24Page):
     # Executed T24 menu command
     @robot_alias("run_t24_menu_command")
     def run_t24_menu_command(self, menu_items):
-        self._make_sure_home_page_is_active()
+        self._add_operation(T24OperationType.Enquiry)
 
         self.log("Executing menu command '" + menu_items + "' ...", "INFO", False)
 
-        self.select_window()
-
-        self.select_frame(self.selectors["menu frame"])
-
         items = [item.strip() for item in menu_items.split('>')]
 
-        xpath = self._build_menu_command_xpath_full(items)
-        elements = self.find_elements(xpath)
+        elements = self._find_or_open_menu_window(items)
+
         if len(elements) == 0:
             raise exceptions.NoSuchElementException("Unable to find menu path '" + menu_items + "'")
         elif len(elements) > 1:
@@ -392,7 +427,8 @@ class T24HomePage(T24Page):
         # expand all of the parent nodes
         for p in parents:
             e = p.find_element_by_xpath("span[@onclick='ProcessMouseClick(event)']/img")
-            e.click()
+            if e.get_attribute("src").find("menu_down") > 0:
+                e.click()
 
         # click on the end element
         menu_element.click()

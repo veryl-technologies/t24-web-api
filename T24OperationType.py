@@ -6,6 +6,7 @@ class T24OperationType:
     StertEditExitingRecord = "Record Editing"
     StartAuthorizingRecord = "Record Authorization"
     SeeRecord = "Record Data Fetching"
+    Menu = "Menu Command"
 
     def __init__(self):
         print 'T24OperationType enumeration initialized'
