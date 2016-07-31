@@ -237,6 +237,15 @@ class T24HomePage(T24Page):
         if enquiry_filters:
             T24EnquiryStartPage().run_enquiry(enquiry_filters)
 
+    def _find_tab(self, item):
+        xpath = "xpath=.//a[contains(@class,'active-tab')]/span[text()='" + item + "']"  # class can be: "active-tab" or "nonactive-tab"
+
+        if self._find_and_select_suitable_opened_window(None, "TAB", xpath):
+            element = self.find_element(xpath, False, 0)
+            return element
+
+        return None
+
     def _find_or_open_menu_window(self, items):
         xpath = self._build_menu_command_xpath_full(items)
 
@@ -267,6 +276,9 @@ class T24HomePage(T24Page):
 
                         self._select_cos_frame(f)
                         if command == "MENU" and f.get_type() == "menu":
+                            if len(self.find_elements(record_id, False, 0)) > 0:
+                                return True
+                        elif command == "TAB" and f.get_type() == "tab":
                             if len(self.find_elements(record_id, False, 0)) > 0:
                                 return True
                         elif self._is_current_window_suitable_for_command(version, command, record_id):
@@ -308,7 +320,7 @@ class T24HomePage(T24Page):
 
     def _get_current_window_info(self):
         try:
-            form = self.find_element("xpath=.//form[@id='appreq']", False, 0)
+            form = self.find_element("xpath=.//form[@id='appreq' or starts-with(@id,'appreq_')]", False, 0)
             version = form.find_element_by_xpath("input[@id='version']").get_attribute("value")
             application = form.find_element_by_xpath("input[@id='application']").get_attribute("value")
 
@@ -326,8 +338,8 @@ class T24HomePage(T24Page):
                 return dict(command = "S", version = application + version, transactionId = id, isCommited = False)
         except:
             try:
-                self.find_element("xpath=.//form[@id='enquiryData']", False, 0)
-                form = self.find_element("xpath=.//form[@id='enquiry']", False, 0)
+                self.find_element("xpath=.//form[starts-with(@id,'enquiryData')]", False, 0)
+                form = self.find_element("xpath=.//form[@id='enquiry' or starts-with(@id,'enquiry_')]", False, 0)
                 version = form.find_element_by_xpath("input[@name='version']").get_attribute("value")
                 return dict(command = "ENQ", version = version, isSelection = False, transactionId = '', isCommited = False)
             except:
@@ -395,10 +407,34 @@ class T24HomePage(T24Page):
             self._set_current_page(T24EnquiryResultPage())
             return self._get_current_page()
 
+    # Executed T24 tab command
+    @robot_alias("run_t24_tab_command")
+    def run_t24_tab_command(self, tab_items):
+        self._add_operation(T24OperationType.Tab)
+
+        self.log("Executing tab command '" + tab_items + "' ...", "INFO", False)
+
+        items = [item.strip() for item in tab_items.split('>')]
+
+        for item in items:
+            element = self._find_tab(item)
+            if element is None:
+                raise exceptions.NoSuchElementException("Unable to find tab '" + item + "'")
+
+            element = element.find_element_by_xpath("..") # we need parent 'a' element
+            if element.get_attribute("class") != "active-tab": # eles"nonactive-tab"
+                element.click()
+
+        self._take_page_screenshot("VERBOSE")
+
+        self._set_current_page(T24Page())
+        return self._get_current_page()
+
+
     # Executed T24 menu command
     @robot_alias("run_t24_menu_command")
     def run_t24_menu_command(self, menu_items):
-        self._add_operation(T24OperationType.Enquiry)
+        self._add_operation(T24OperationType.Menu)
 
         self.log("Executing menu command '" + menu_items + "' ...", "INFO", False)
 
@@ -594,14 +630,14 @@ class T24EnquiryResultPage(T24Page):
         #if not self.wait_until_page_contains_element(self.selectors["first text column in grid"], 5):
         #   return ""  # doesn't work
 
-        row_idx = self._find_first_matching_enquiry_row(enquiry_constraints)
-        if row_idx is None:
+        row_id = self._find_first_matching_enquiry_row_id(enquiry_constraints)
+        if row_id is None:
             return []
 
         res = []
         for c in column_indexes:
             index = int(c) + 1
-            val = self._get_text("css=#r" + str(row_idx) + " > td:nth-child(" + str(index) + ")")  # TODO error handling (throw better error)
+            val = self._get_text("css=#" + row_id + " > td:nth-child(" + str(index) + ")")  # TODO error handling (throw better error)
             res.append(val)
 
         return res
@@ -612,25 +648,25 @@ class T24EnquiryResultPage(T24Page):
         self.select_window("self")
         self.wait_until_page_contains_element(self.selectors["refresh button"])
 
-        row_idx = self._find_first_matching_enquiry_row(enquiry_constraints)
-        if row_idx is None:
+        row_id = self._find_first_matching_enquiry_row_id(enquiry_constraints)
+        if row_id is None:
             return False, "No matching enquiry rows found"
 
         try:
             if unicode(str(action), 'utf-8').isnumeric():
-                element = self.find_element("css=#r" + str(row_idx) + " > td:nth-child(" + str(action) + ") > a", False, 0)
+                element = self.find_element("css=#" + row_id + " > td:nth-child(" + str(action) + ") > a", False, 0)
             else:
-                element = self.find_element("xpath=.//tr[@id='r" + str(row_idx) + "']/td/a[@title='" + action + "']", False, 0)
+                element = self.find_element("xpath=.//tr[@id='" + row_id + "']/td/a[@title='" + action + "']", False, 0)
             element.click()
             time.sleep(2)
         except:
-            return False, "Unable to find action element '" + action + "' on enquiry result row: " + str(row_idx)
+            return False, "Unable to find action element '" + action + "' on enquiry result row: " + row_id
 
         return True, ""
 
-    def _find_first_matching_enquiry_row(self, enquiry_constraints):
+    def _find_first_matching_enquiry_row_id(self, enquiry_constraints):
         if enquiry_constraints is None:
-            return 1
+            return self._find_enq_row_id_by_index(1)
 
         enquiry_constraints_by_idx = []
 
@@ -644,28 +680,38 @@ class T24EnquiryResultPage(T24Page):
 
         # todo if there are pages and we are not able to find the row we have to move to the next page
         for row_idx in range(1, 100):
-            try:
-                self.find_element("css=#r" + str(row_idx))
-            except:
+            row_id = self._find_enq_row_id_by_index(row_idx)
+            if row_id is None:
                 break   # no more rows
 
             matches = True
             for c in enquiry_constraints_by_idx:
-                val = self._get_text("css=#r" + str(row_idx) + " > td:nth-child(" + str(c[0]) + ")")
+                val = self._get_text("css=#" + row_id + " > td:nth-child(" + str(c[0]) + ")")
                 if not self._evaluate_comparison(val, c[1], c[2]):
                     matches = False
                     break
 
             if matches:
-                return row_idx
+                return row_id
 
         return None
+
+    def _find_enq_row_id_by_index(self, row_idx):
+        row_id = "r" + str(row_idx)
+        try:
+            row = self.find_element("xpath=.//tr[@id='" + row_id + "' or starts-with(@id, '" + row_id + "_')]")
+            row_id = row.get_attribute('id')
+            return row_id
+        except:
+            None
 
     def _enumerate_enquiry_header(self):
         result = []
         for i in range(1,200,1):
             try:
-                elem = self.find_element("xpath=.//th[@id='columnHeaderText" + str(i) + "']", False, 0)
+                id = 'columnHeaderText' + str(i)
+                xpath = "xpath=.//th[@id='" + id + "' or starts-with(@id,'" + id + "_')]"
+                elem = self.find_element(xpath, False, 0)
                 result.append((i, elem.text))
             except:
                 break

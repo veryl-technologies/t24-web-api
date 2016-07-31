@@ -18,6 +18,8 @@ class CosFrame:
             return "tab"
         if "OS.GET.MENU" in self.src:
             return "menu"
+        if "OS.GET.TABBED.SCREEN" in self.src:
+            return "tab"
         if "enqaction=SELECTION" in self.src:
             return "enq"
         return "unk"

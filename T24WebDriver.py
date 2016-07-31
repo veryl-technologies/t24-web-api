@@ -82,6 +82,16 @@ class T24WebDriver:
 
         self.home_page.run_t24_menu_command(menu_items)
 
+    def execute_t24_tab_command(self, tab_items):
+        """
+        Executes T24 tab command with specified tab items separated by '>'
+        Example: 'Till Admin > Exchange Rates'
+        """
+
+        self._make_sure_is_logged_in()
+
+        self.home_page.run_t24_tab_command(tab_items)
+
     def create_or_amend_t24_record(self, app_version, record_id, record_field_values, overrides_handling=None, error_handling=None, post_verification=None):
         """
         Creates a T24 record with the specified fields if 'record_id' is not specified, otherwise amends it

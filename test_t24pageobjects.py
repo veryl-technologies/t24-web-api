@@ -197,6 +197,20 @@ class T24WebDriverTestCase(unittest.TestCase):
 
         # inputPage.click_commit_button()
 
+    def test_tab(self):
+        self.homePage.run_t24_menu_command("Home Page - Customer Service Agent")
+        self.homePage.run_t24_tab_command("Till Admin > Exchange Rates")
+
+        filters = ["Ccy EQ AUD"]
+        enqResultPage = self.homePage.open_t24_enquiry("CURRENCY.RATES", filters)
+        is_success, error_message = enqResultPage.execute_enquiry_action(filters, "View")
+        assert (is_success)
+
+        seePage = self.homePage.open_see_page("CURRENCY,EXCH.RATES", "")
+        print seePage.get_T24_field_value("SELL.RATE")
+
+        self.homePage.sign_off()
+
 #    def tearDown(self):
 #        self.loginpage.close()
 
