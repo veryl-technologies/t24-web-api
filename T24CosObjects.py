@@ -1,6 +1,7 @@
 class CosFrame:
     id = None
     parent_frames = []
+    children = []
 
     def __init__(self, element, parent_frames):
         self.id = element.get_attribute("id")
