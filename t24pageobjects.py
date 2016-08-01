@@ -892,6 +892,13 @@ class T24RecordInputPage(T24TransactionPage):
             except:
                 pass
 
+            try:
+                elements = self.find_elements(T24TextAreaFieldCtrl.get_locator(fieldName), False, 0)
+                if elements and len(elements) == 1:
+                    return T24TextAreaFieldCtrl(self, fieldName, elements[0])
+            except:
+                pass
+
         return None
 
     def _select_field_tab(self, fieldCtrl):
@@ -1055,6 +1062,13 @@ class T24InputFieldCtrl(T24FieldCtrl):
     def get_first_value(self):
         return ''  # TODO maybe it's good to return the text of the input field, although it would be empty
 
+class T24TextAreaFieldCtrl(T24InputFieldCtrl):
+    def __init__(self, page, fieldName, element):
+        T24InputFieldCtrl.__init__(self, page, fieldName, element)
+
+    @staticmethod
+    def get_locator(fieldName):
+        return "css=textArea[name='fieldName:" + fieldName + "']"
 
 class T24SelectFieldCtrl(T24FieldCtrl):
     def __init__(self, page, fieldName, element):
