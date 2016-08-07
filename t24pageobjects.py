@@ -386,12 +386,12 @@ class T24HomePage(T24Page):
                     form = self.find_element("xpath=.//form[@id='enqsel']", False, 0)
                     enqname = form.find_element_by_xpath("input[@id='enqname']").get_attribute("value")
                     return dict(command = "ENQ", version = enqname, isSelection = True, transactionId = '', isCommited = False)
-                except Exception as e:
+                except:
                     pass
 
         return None
 
-    # Enter a T24 command and simulate an Enter
+    # Input a T24 command and simulate pressing Enter
     def _enter_t24_command(self, text):
 
         self._make_sure_home_page_is_active()
@@ -460,8 +460,8 @@ class T24HomePage(T24Page):
             if element is None:
                 raise exceptions.NoSuchElementException("Unable to find tab '" + item + "'")
 
-            element = element.find_element_by_xpath("..") # we need parent 'a' element
-            if element.get_attribute("class") != "active-tab": # eles"nonactive-tab"
+            element = element.find_element_by_xpath("..")  # we need parent 'a' element
+            if element.get_attribute("class") != "active-tab":  # eles"nonactive-tab"
                 element.click()
 
         self._take_page_screenshot("VERBOSE")
@@ -490,13 +490,13 @@ class T24HomePage(T24Page):
 
         menu_element = elements[0]
 
-        # go and find all of the parent nodes
+        # find all of the parent nodes
         parent = menu_element.find_element_by_xpath("..")
         parents = []
         while True:
             parent = parent.find_element_by_xpath("../..")
             if parent.tag_name != u'li':
-                break;
+                break
             parents.insert(0, parent)
 
         # expand all of the parent nodes
@@ -508,7 +508,7 @@ class T24HomePage(T24Page):
         # click on the end element
         menu_element.click()
 
-        # todo - set curret page should be done here or sth else?
+        # todo - set current page should be done here or sth else?
         # todo - we can check the menu_element for type of the page opened (I, A, S, COS ... ) to determine what current page we should set
 
         self._take_page_screenshot("VERBOSE")
@@ -522,7 +522,7 @@ class T24HomePage(T24Page):
         i = 0
         for item in items:
             i += 1
-            if i == len(items): # last item
+            if i == len(items):  # last item
                 result += "/li/a[contains(@onclick, '" + item + "')]"
             else:
                 result += "/li[@class='clsHasKids']/span[text()='" + item + "']/following-sibling::ul[1]"
@@ -615,7 +615,7 @@ class T24EnquiryStartPage(T24Page):
                 element = self.find_element('xpath=.//input[@type="hidden" and @value="' + field + '"]', False, 0)
                 id = element.get_attribute("id")
             except:
-                # if field name not found probably this would be used as post filter
+                # if field name not found, probably this would be used as post filter
                 continue
 
             indexes = id[id.index(":"):]
@@ -721,7 +721,7 @@ class T24EnquiryResultPage(T24Page):
         for row_idx in range(1, 100):
             row_id = self._find_enq_row_id_by_index(row_idx)
             if row_id is None:
-                break   # no more rows
+                break  # no more rows
 
             matches = True
             for c in enquiry_constraints_by_idx:
@@ -746,7 +746,7 @@ class T24EnquiryResultPage(T24Page):
 
     def _enumerate_enquiry_header(self):
         result = []
-        for i in range(1,200,1):
+        for i in range(1, 200, 1):
             try:
                 id = 'columnHeaderText' + str(i)
                 xpath = "xpath=.//th[@id='" + id + "' or starts-with(@id,'" + id + "_')]"
@@ -948,19 +948,17 @@ class T24RecordInputPage(T24TransactionPage):
                     onclickVal = "javascript:changetab('" + tabName + "')"
                     tabElement = self.find_element('xpath=.//a[@onclick="' + onclickVal + '"]')
                     if tabElement.get_attribute("class") == "nonactive-tab":
-                        self.log("Activating tab '" + tabName + "'...", "DEBUG", False)
+                        self.log("Activating tab '" + tabName + "'...", "INFO", False)
                         tabElement.click()
             return tabName
         except:
-            pass    # not essential action
+            pass  # not essential action
             return None
 
     # Clicks the Commit Button when dealing with T24 transactions
     def click_commit_button(self):
         self._take_page_screenshot("VERBOSE")
-
         self.wait_until_page_contains_element(self._get_commit_locator(), 3)
-
         self.click_element(self._get_commit_locator())
         return self
 
@@ -976,9 +974,10 @@ class T24RecordInputPage(T24TransactionPage):
     def click_accept_overrides(self):
         try:
             start = datetime.now()
-            self.log("Waiting for Accept Overrides link to appear... ")
+            self.log("Waiting for Accept Overrides link to appear... ", "DEBUG", False)
             self.wait_until_page_contains_element("link=Accept Overrides", 10)
-            self.log("Accept Overrides link found in " + str(int((datetime.now() - start).total_seconds())) + " seconds")
+            self.log("Accept Overrides link found in " + str(int((datetime.now() - start).total_seconds())) +
+                     " seconds", "DEBUG", False)
 
             self._take_page_screenshot("VERBOSE")
 
@@ -988,16 +987,16 @@ class T24RecordInputPage(T24TransactionPage):
             # We could also use self.wait_until_page_does_not_contain or wait_until_page_does_not_contain_element,
             # but need to temporarily reduce 'selenium_implicit_wait' from 10 to something quite smaller (e.g. 0.1)
             start = datetime.now()
-            self.log("Waiting for completion of accepting overrides...")
+            self.log("Waiting for completion of accepting overrides...", "DEBUG", False)
             err = self._wait_until_page_source_does_not_contain("Accept Overrides", 10)
             if err is None:
                 self.log("Completed processing of 'Accept Overrides' in " +
-                     str(int((datetime.now() - start).total_seconds())) + " seconds")
+                         str(int((datetime.now() - start).total_seconds())) + " seconds", "DEBUG", False)
             else:
-                self.log(err)
-        except:  # catch *all* exceptions
+                self.log(err, "WARN", False)
+        except:
             e = sys.exc_info()[0]
-            self.log("Warning: " + str(e))
+            self.log(str(e), "WARN", False)
             pass
 
         return self
