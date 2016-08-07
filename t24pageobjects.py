@@ -110,34 +110,33 @@ class T24Page(Page):
         res = [f for f in frames if (len(f.children) == 0)]
         return res
 
-    def _enumerate_frames_recursively(self, res, parent_frames, currently_selected_frames):
-        elements = self.find_elements("xpath=.//frame", False, 0)
-        local_res = [CosFrame(e, parent_frames) for e in elements]
+    def _enumerate_frames_recursively(self, all_frames_found, parent_frames, currently_selected_frames):
+        frame_elements = self.find_elements("xpath=.//frame", False, 0)
+        child_frames = [CosFrame(f, parent_frames) for f in frame_elements]
 
-        res.extend(local_res)
+        all_frames_found.extend(child_frames)
 
-        for r in local_res:
-            if self._cos_frame_can_have_children(r):
-                parents = parent_frames[:]
-                parents.append(r.id)
+        for frame in child_frames:
+            if self._cos_frame_can_have_children(frame):
+                parents_ids = parent_frames[:]
+                parents_ids.append(frame.id)
 
-                self._select_frames_by_ids(parents, currently_selected_frames)
+                self._select_frames_by_ids(parents_ids, currently_selected_frames)
 
                 # NOTE: For now we don't use CosDivPane's therefore we will not extract them to improve the performance a bit
                 # But if in future they would be needed please uncomment the line bellow:
                 #
-                #res.extend([CosDivPane(p, parents) for p in self.find_elements("xpath=.//div[starts-with(@id,'pane_')]", False, 0)])
+                #all_frames_found.extend([CosDivPane(p, parents) for p in self.find_elements("xpath=.//div[starts-with(@id,'pane_')]", False, 0)])
                 #
 
-                children = self._enumerate_frames_recursively(res, parents, currently_selected_frames)
-                r.children = children
+                children = self._enumerate_frames_recursively(all_frames_found, parents_ids, currently_selected_frames)
+                frame.children = children
 
-        return local_res
+        return child_frames
 
     def _select_frames_by_ids(self, frames, currently_selected_frames):
-
         try:
-            # this logic is to reuse already selected frames, in case of exception the nomal logic would be executed
+            # this logic is to reuse already selected frames, in case of exception - the normal logic would be executed
             remaining_frames = frames[:]
             if len(currently_selected_frames) > 0 and len(currently_selected_frames) <= len(remaining_frames):
                 for selected_frame in currently_selected_frames:
@@ -153,18 +152,18 @@ class T24Page(Page):
                 self.select_frame(f)
         except:
             # the normal logic - deselecting all frames and then selecting the given ones
-            # note - only these 3 lines bellow are enough, but because of the performance the rest of the code try to reuse already selected frames
+            # NOTE: only these 3 lines below are enough, but for performance reasons, try to reuse already selected frames
             self.unselect_frame()
             for f in frames:
                 self.select_frame(f)
 
-        #set the list with currently selected frames
+        # set the list with currently selected frames
         if currently_selected_frames is not None:
             del currently_selected_frames[:]
             currently_selected_frames.extend(frames)
 
     def _cos_frame_can_have_children(self, cos_frame):
-        # todo - may be othe types also cannot have children. We do this for performance optimizations
+        # todo - may be other types also cannot have children. That's a quick performance optimization
         return cos_frame.get_type() != "tab" and cos_frame.get_type() != "menu" and cos_frame.get_type() != "end"
 
     def _select_cos_frame(self, cos_frame):
