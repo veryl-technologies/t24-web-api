@@ -686,6 +686,8 @@ class T24EnquiryResultPage(T24Page):
         self.select_window("self")
         self.wait_until_page_contains_element(self.selectors["refresh button"])
 
+        self._take_page_screenshot("INFO")
+
         row_id = self._find_first_matching_enquiry_row_id(enquiry_constraints)
         if row_id is None:
             return False, "No matching enquiry rows found"
@@ -696,7 +698,7 @@ class T24EnquiryResultPage(T24Page):
             else:
                 element = self.find_element("xpath=.//tr[@id='" + row_id + "']/td/a[@title='" + action + "']", False, 0)
             element.click()
-            time.sleep(2)
+            time.sleep(2)  # TODO why sleep?
         except:
             return False, "Unable to find action element '" + action + "' on enquiry result row: " + row_id
 
