@@ -27,7 +27,7 @@ class T24WebDriver:
 
     def t24_login(self, user_type="INPUTTER"):
         """
-        Enters login credential in the T24 login page for the specified user type.
+        Enters login credential in the T24 login page for the specified type of user.
         The default user type is INPUTTER
         """
 
@@ -64,7 +64,7 @@ class T24WebDriver:
 
     def t24_logoff(self):
         """
-        If there is a currently logged-in user in T24, a Sign Off would be get clicked to open the T24 login page
+        If there is a currently logged-in user in T24, clicks the 'Sign Off' button and reopens the T24 login page
         """
         if self.home_page:
             self.home_page.sign_off()
@@ -72,7 +72,7 @@ class T24WebDriver:
 
     def execute_t24_menu_command(self, menu_items):
         """
-        Executes T24 menu command with specified menu items separated by '>'
+        Clicks on a T24 menu item ('>' is used as the menu hierarchy delimiter)
         Example: 'User Menu > Customer > Individual Customer'
         Note that starting items can be omitted.
         For example: 'Customer > Individual Customer' or 'Individual Customer' will both navigate to the same target
@@ -84,7 +84,7 @@ class T24WebDriver:
 
     def execute_t24_tab_command(self, tab_items):
         """
-        Executes T24 tab command with specified tab items separated by '>'
+        Clicks on a T24 tab ('>' is used as the tab hierarchy delimiter)
         Example: 'Till Admin > Exchange Rates'
         """
 
@@ -94,7 +94,7 @@ class T24WebDriver:
 
     def create_or_amend_t24_record(self, app_version, record_id, record_field_values, overrides_handling=None, error_handling=None, post_verification=None):
         """
-        Creates a T24 record with the specified fields if 'record_id' is not specified, otherwise amends it
+        Creates a T24 record with the specified fields if 'record_id' is not specified, otherwise amends an existing record
         """
         self._make_sure_is_logged_in()
 
@@ -154,9 +154,8 @@ class T24WebDriver:
 
     def check_t24_record(self, app, record_id, validations):
         """
-        Retrieves the T24 record by its unique ID and verifies its fields against some predefined criteria
+        Retrieves the T24 record by its ID and verifies its field values against some predefined criteria
         """
-
         if not validations:
             self._log_info('No actions specified after records retrieval. Would try to read @ID...')
             validations = ['@ID >> dummy']  # empty SEE should probably check for record existence.
@@ -257,7 +256,7 @@ class T24WebDriver:
 
     def execute_T24_enquiry(self, enquiry, enquiry_constraints, action, action_parameters):
         """
-        Execute a T24 enquiry with the specified criteria and processes the first found result
+        Executes a T24 enquiry with the specified criteria and processes the first found result
         either by fetching and optionally verifying its values (via action "Check Result")
         or by applying a custom like clicking on the corresponding link/button/menu item
         """
