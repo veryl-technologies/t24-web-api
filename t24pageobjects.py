@@ -174,6 +174,28 @@ class T24Page(Page):
 
         self.select_frame(cos_frame.id)
 
+    def _wait_until_page_contains_any_element(self, *selectors):
+        waitTimeBetweenRetries = 1
+        maxRetries = 10
+
+        while maxRetries > 0:
+            maxRetries -= 1
+            isLastTry = maxRetries == 0
+
+            for s in selectors:
+                isLastSelector = s == selectors[len(selectors) - 1]
+                try:
+                    waitTime = 0
+                    if isLastSelector:
+                        waitTime = waitTimeBetweenRetries
+                    if self.find_element(s, False, waitTime) is not None:
+                        return
+                except:
+                    if isLastTry and isLastSelector:
+                        raise
+                    else:
+                        pass
+
 
 class T24LoginPage(T24Page):
     """ Models the T24 login page"""
@@ -639,6 +661,7 @@ class T24EnquiryResultPage(T24Page):
     selectors = {
         "refresh button": "xpath=.//img[@alt='Refresh']",
         "first text column in grid": "css=#r1 > td:nth-child(2)",
+        "enquiry data table": "xpath=.//table[@id='enquiryResponseData']"
     }
 
     # Gets the first ID of an enquiry result
@@ -684,7 +707,7 @@ class T24EnquiryResultPage(T24Page):
     @robot_alias("execute_enquiry_action")
     def execute_enquiry_action(self, enquiry_constraints, action):
         self.select_window("self")
-        self.wait_until_page_contains_element(self.selectors["refresh button"])
+        self._wait_until_page_contains_any_element(self.selectors["refresh button"], self.selectors["enquiry data table"])
 
         self._take_page_screenshot("INFO")
 
@@ -698,7 +721,7 @@ class T24EnquiryResultPage(T24Page):
             else:
                 element = self.find_element("xpath=.//tr[@id='" + row_id + "']/td/a[@title='" + action + "']", False, 0)
             element.click()
-            time.sleep(2)  # TODO why sleep?
+            time.sleep(2)  # TODO why sleep? N.Z. There are re-loads of frames, but not quite sure whether this is needed at all
         except:
             return False, "Unable to find action element '" + action + "' on enquiry result row: " + row_id
 
@@ -718,7 +741,23 @@ class T24EnquiryResultPage(T24Page):
                 idx = header_item[0][0]
                 enquiry_constraints_by_idx.append( (idx, oper, value) )
 
-        # todo if there are pages and we are not able to find the row we have to move to the next page
+        # todo if there are pages and we are not able to find the row we have to move to the next page - all logic bellow should be moved to method and from here we have to switch pages until match
+
+        # expand expandable rows that might match the constraints
+        has_expandable_rows = False
+        for e in self.find_elements("xpath=.//tr/td[1]/a[starts-with(@onclick,'javascript:expandrow(')]", False, 0):
+            # expandable row id's
+            row_id = e.find_element_by_xpath("../..").get_attribute("id");
+
+            for c in enquiry_constraints_by_idx:
+                val = self._get_text("css=#" + row_id + " > td:nth-child(" + str(c[0]) + ")")
+                if self._evaluate_comparison(val, c[1], c[2]):
+                    e.click()
+                    has_expandable_rows = True
+                    break
+
+        # iterate through all of the ros to find a match
+        last_val_of_col = {}
         for row_idx in range(1, 100):
             row_id = self._find_enq_row_id_by_index(row_idx)
             if row_id is None:
@@ -727,7 +766,13 @@ class T24EnquiryResultPage(T24Page):
             matches = True
             for c in enquiry_constraints_by_idx:
                 val = self._get_text("css=#" + row_id + " > td:nth-child(" + str(c[0]) + ")")
-                if not self._evaluate_comparison(val, c[1], c[2]):
+                if has_expandable_rows:
+                    if val is not None and len(val) > 0:
+                        last_val_of_col[c[0]] = val
+                    elif last_val_of_col.has_key(c[0]):
+                        val = last_val_of_col[c[0]]
+
+                if not self._evaluate_comparison(val, c[1], c[2]):   # .find_element_by_xpath("a/img[@alt='Expand group']")
                     matches = False
                     break
 
@@ -926,14 +971,14 @@ class T24RecordInputPage(T24TransactionPage):
                 pass
 
             try:
-                elements = self.find_elements(T24RadioFieldCtrl.get_locator(fieldName, hiddenFieldTabName), False, waitTimeBetweenRetries)
+                elements = self.find_elements(T24RadioFieldCtrl.get_locator(fieldName, hiddenFieldTabName), False, 0)
                 if elements:
                     return T24RadioFieldCtrl(self, fieldName, elements, hiddenFieldTabName)
             except:
                 pass
 
             try:
-                elements = self.find_elements(T24TextAreaFieldCtrl.get_locator(fieldName), False, 0)
+                elements = self.find_elements(T24TextAreaFieldCtrl.get_locator(fieldName), False, waitTimeBetweenRetries)
                 if elements and len(elements) == 1:
                     return T24TextAreaFieldCtrl(self, fieldName, elements[0])
             except:
