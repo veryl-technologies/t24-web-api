@@ -84,6 +84,9 @@ class T24Page(Page):
     def _get_commit_locator(self):
         return "css=img[alt=\"Commit the deal\"]"
 
+    def _get_validate_locator(self):
+        return "css=img[alt=\"Validate a deal\"]"
+
     def _split_enquiry_filter(self, filter):
         operators = ["EQ", "LK", "UL", "NE", "GT", "GE", "LT", "LE", "RG", "NR", "CT", "NC", "BW", "EW", "DNBW", "DNEW", "SAID"]
 
@@ -394,6 +397,8 @@ class T24HomePage(T24Page):
                 return dict(command = "I", version = application + version, transactionId = id, isCommited = False)
             elif T24TransactionPage().autorize_btn_enabled():
                 return dict(command = "A", version = application + version, transactionId = id, isCommited = False)
+            elif T24TransactionPage().validate_btn_enabled():
+                return dict(command = "I", version = application + version, transactionId = id, isCommited = False)
             else:
                 return dict(command = "S", version = application + version, transactionId = id, isCommited = False)
         except:
@@ -556,7 +561,7 @@ class T24HomePage(T24Page):
         self._add_operation(T24OperationType.StartInputNewRecord)
         self._find_or_open_app_window(version, "I", "F3")
 
-        self._set_current_page(T24RecordInputPage())
+        self._set_current_page(T24RecordInputPage(version))
         return self._get_current_page()
 
     @robot_alias("open_edit_page")
@@ -566,7 +571,7 @@ class T24HomePage(T24Page):
         record_id = self.evaluate_value(record_id)
         self._find_or_open_app_window(version, "I", record_id)
 
-        self._set_current_page(T24RecordInputPage())
+        self._set_current_page(T24RecordInputPage(version, record_id))
         return self._get_current_page()
 
     @robot_alias("open_authorize_page")
@@ -576,7 +581,7 @@ class T24HomePage(T24Page):
         record_id = self.evaluate_value(record_id)
         self._find_or_open_app_window(version, "A", record_id)
 
-        self._set_current_page(T24RecordInputPage())
+        self._set_current_page(T24RecordInputPage(version, record_id))
         return self._get_current_page()
 
     @robot_alias("open_see_page")
@@ -825,6 +830,13 @@ class T24TransactionPage(T24Page):
         except:
             return False
 
+    def validate_btn_enabled(self):
+        try:
+            btn = self.find_element("xpath=.//img[@title='Validate a deal']")
+            return "_dis.gif" not in btn.get_attribute("src")
+        except:
+            return False
+
 
 class T24RecordSeePage(T24TransactionPage):
     """ Models the T24 Record See Page"""
@@ -890,6 +902,18 @@ class T24RecordInputPage(T24TransactionPage):
 
     currentTabName = ''
 
+    version = None
+
+    transaction_id = None
+
+    _last_selected_property = None
+
+    def __init__(self, version = None, transaction_id = None):
+        T24TransactionPage.__init__(self)
+
+        self.version = version
+        self.transaction_id = transaction_id
+
     # Checks whether the transaction is completed and if yes, extracts the referenced ID
     @robot_alias("get_id_from_completed_transaction")
     def get_id_from_completed_transaction(self):
@@ -918,13 +942,21 @@ class T24RecordInputPage(T24TransactionPage):
     # Set a value in a text field, by specifying the underlying T24 field name
     @robot_alias("set_T24_field_value")
     def set_T24_field_value(self, fieldName, fieldText):
+        aaProperty = None
+        if self._is_AA():
+            aaProperty, fieldName = self._split_AA_property_name(fieldName)
+            if aaProperty is not None and self._last_selected_property != aaProperty:
+                propertyLine = self.find_element("xpath=.//a[@href='#legend_" + aaProperty + "']", False, 0)
+                propertyLine.click()
 
-        fieldCtrl = self._get_field_ctrl(fieldName)
+        self._last_selected_property = aaProperty
+
+        fieldCtrl = self._get_field_ctrl(aaProperty, fieldName)
         if not fieldCtrl:
             raise exceptions.NoSuchElementException("Unable to find control for '" + fieldName + "' field name")
 
         self.log("Checking if the field is in another tab...", "DEBUG", False)
-        fieldTabName = self._select_field_tab(fieldCtrl)
+        fieldTabName = self._select_field_tab(aaProperty, fieldCtrl)
         if(fieldTabName != self.currentTabName):
             self.log("The current tab is '" + fieldTabName + "'.", "INFO", False)
             self.currentTabName = fieldTabName
@@ -940,7 +972,22 @@ class T24RecordInputPage(T24TransactionPage):
 
         return self
 
-    def _get_field_ctrl(self, fieldName):
+    def _is_AA(self):
+        return self.version is not None and (self.version == "AA.ARRANGEMENT.ACTIVITY" or self.version.startswith("AA.ARRANGEMENT.ACTIVITY,"))
+
+    def _split_AA_property_name(self, field_name):
+        try:
+            start_idx = field_name.index("[")
+            if start_idx == 0:
+                end_idx = field_name.index("]")
+                if end_idx > 1 and end_idx < (len(field_name) - 1):
+                    return field_name[start_idx + 1 : end_idx], field_name[end_idx + 1:]
+        except:
+            pass
+
+        return None, field_name
+
+    def _get_field_ctrl(self, aaProperty, fieldName):
         waitTimeBetweenRetries = 1
         maxRetries = 10
 
@@ -948,7 +995,7 @@ class T24RecordInputPage(T24TransactionPage):
             maxRetries -= 1
             hiddenFieldTabName = None
             try:
-                elements = self.find_elements(T24InputFieldCtrl.get_locator(fieldName), False, 0)
+                elements = self.find_elements(T24InputFieldCtrl.get_locator(aaProperty, fieldName), False, 0)
                 if elements:
                     if len(elements) == 1:
                         element = elements[0]
@@ -957,42 +1004,47 @@ class T24RecordInputPage(T24TransactionPage):
                         element = elements[0]  # choose first, though maybe in the current tab is better (if any)
 
                 if element and element.get_attribute("type") != u'hidden':
-                    return T24InputFieldCtrl(self, fieldName, element)
+                    return T24InputFieldCtrl(self, aaProperty, fieldName, element)
                 elif element.get_attribute("type") == u'hidden':
                     hiddenFieldTabName = element.get_attribute("tabname")
             except:
                 pass
 
             try:
-                element = self.find_elements(T24SelectFieldCtrl.get_locator(fieldName), False, 0)[0]
+                element = self.find_elements(T24SelectFieldCtrl.get_locator(aaProperty, fieldName), False, 0)[0]
                 if element:
-                    return T24SelectFieldCtrl(self, fieldName, element)
+                    return T24SelectFieldCtrl(self, aaProperty, fieldName, element)
             except:
                 pass
 
             try:
-                elements = self.find_elements(T24RadioFieldCtrl.get_locator(fieldName, hiddenFieldTabName), False, 0)
+                elements = self.find_elements(T24RadioFieldCtrl.get_locator(aaProperty, fieldName, hiddenFieldTabName), False, 0)
                 if elements:
-                    return T24RadioFieldCtrl(self, fieldName, elements, hiddenFieldTabName)
+                    return T24RadioFieldCtrl(self, aaProperty, fieldName, elements, hiddenFieldTabName)
             except:
                 pass
 
             try:
-                elements = self.find_elements(T24TextAreaFieldCtrl.get_locator(fieldName), False, waitTimeBetweenRetries)
+                elements = self.find_elements(T24TextAreaFieldCtrl.get_locator(aaProperty, fieldName), False, waitTimeBetweenRetries)
                 if elements and len(elements) == 1:
-                    return T24TextAreaFieldCtrl(self, fieldName, elements[0])
+                    return T24TextAreaFieldCtrl(self, aaProperty, fieldName, elements[0])
             except:
                 pass
 
         return None
 
-    def _select_field_tab(self, fieldCtrl):
+    def _select_field_tab(self, aaProperty, fieldCtrl):
         try:
             tabName = fieldCtrl.element.get_attribute("tabname")
             if tabName and tabName != self.currentTabName and tabName != "mainTab":
                 if tabName != 'tab1' or self.currentTabName:  # assume we start in 'tab1' and only go back if necessary
                     onclickVal = "javascript:changetab('" + tabName + "')"
-                    tabElement = self.find_element('xpath=.//a[@onclick="' + onclickVal + '"]')
+
+                    locator_parent = ""
+                    if aaProperty is not None and len(aaProperty) > 0:
+                        locator_parent = "fieldset/a[@name='legend_" + aaProperty + "']/../div//"
+
+                    tabElement = self.find_element('xpath=.//' + locator_parent + 'a[@onclick="' + onclickVal + '"]')
                     if tabElement.get_attribute("class") == "nonactive-tab":
                         self.log("Activating tab '" + tabName + "'...", "INFO", False)
                         tabElement.click()
@@ -1006,6 +1058,12 @@ class T24RecordInputPage(T24TransactionPage):
         self._take_page_screenshot("VERBOSE")
         self.wait_until_page_contains_element(self._get_commit_locator(), 3)
         self.click_element(self._get_commit_locator())
+        return self
+
+    def click_validate_button(self):
+        self._take_page_screenshot("VERBOSE")
+        self.wait_until_page_contains_element(self._get_validate_locator(), 3)
+        self.click_element(self._get_validate_locator())
         return self
 
     def is_accept_overrides_displayed_no_wait(self):
@@ -1083,8 +1141,9 @@ class T24RecordInputPage(T24TransactionPage):
 
 
 class T24FieldCtrl:
-    def __init__(self, page, fieldName, element):
+    def __init__(self, page, aaProperty, fieldName, element):
         self.page = page
+        self.aaProperty = aaProperty
         self.fieldName = fieldName
         self.element = element
 
@@ -1129,14 +1188,22 @@ class T24FieldCtrl:
         if self.element:
             self.element.send_keys(Keys.TAB)
 
+    @staticmethod
+    def _get_aa_property_locator_parent(aaProperty):
+        if aaProperty is None or len(aaProperty) == 0:
+            return ""
+
+        #'css=fieldset>a[name="legend_Account"]+legend+div input[name="fieldName:SHORT.TITLE"]'
+        return 'fieldset>a[name="legend_' + aaProperty + '"]+legend+div '
+
 
 class T24InputFieldCtrl(T24FieldCtrl):
-    def __init__(self, page, fieldName, element):
-        T24FieldCtrl.__init__(self, page, fieldName, element)
+    def __init__(self, page, aaProperty, fieldName, element):
+        T24FieldCtrl.__init__(self, page, aaProperty, fieldName, element)
 
     @staticmethod
-    def get_locator(fieldName):
-        return "css=input[name='fieldName:" + fieldName + "']"
+    def get_locator(aaProperty, fieldName):
+        return "css=" + T24FieldCtrl._get_aa_property_locator_parent(aaProperty) + "input[name='fieldName:" + fieldName + "']"
 
     def set_control_text(self, fieldText):
         self.page.log("Setting a value to a text field...", "DEBUG", False)
@@ -1147,27 +1214,27 @@ class T24InputFieldCtrl(T24FieldCtrl):
         return ''  # TODO maybe it's good to return the text of the input field, although it would be empty
 
 class T24TextAreaFieldCtrl(T24InputFieldCtrl):
-    def __init__(self, page, fieldName, element):
-        T24InputFieldCtrl.__init__(self, page, fieldName, element)
+    def __init__(self, page, aaProperty, fieldName, element):
+        T24InputFieldCtrl.__init__(self, page, aaProperty, fieldName, element)
 
     @staticmethod
-    def get_locator(fieldName):
-        return "css=textArea[name='fieldName:" + fieldName + "']"
+    def get_locator(aaProperty, fieldName):
+        return "css=" + T24FieldCtrl._get_aa_property_locator_parent(aaProperty) + "textArea[name='fieldName:" + fieldName + "']"
 
 class T24SelectFieldCtrl(T24FieldCtrl):
-    def __init__(self, page, fieldName, element):
-        T24FieldCtrl.__init__(self, page, fieldName, element)
+    def __init__(self, page, aaProperty, fieldName, element):
+        T24FieldCtrl.__init__(self, page, aaProperty, fieldName, element)
 
     @staticmethod
-    def get_locator(fieldName):
-        return "css=select[name='fieldName:" + fieldName + "']"
+    def get_locator(aaProperty, fieldName):
+        return "css=" + T24FieldCtrl._get_aa_property_locator_parent(aaProperty) + "select[name='fieldName:" + fieldName + "']"
 
     def set_control_text(self, fieldText):
         self.page.log("Selecting a value from a list...", "DEBUG", False)
-        self.page.select_from_list(self.get_locator(self.fieldName), fieldText)
+        self.page.select_from_list(self.get_locator(self.aaProperty, self.fieldName), fieldText)
 
     def get_first_value(self):
-        locator = self.get_locator(self.fieldName) + " option"
+        locator = self.get_locator(self.aaProperty, self.fieldName) + " option"
         elements = self.page.find_elements(locator)
         if len(elements) > 0 and len(elements[0].get_attribute('value')):
             return elements[0].get_attribute('value')
@@ -1178,14 +1245,14 @@ class T24SelectFieldCtrl(T24FieldCtrl):
 
 
 class T24RadioFieldCtrl(T24FieldCtrl):
-    def __init__(self, page, fieldName, elements, tabName):
-        T24FieldCtrl.__init__(self, page, fieldName, elements[0])
+    def __init__(self, page, aaProperty, fieldName, elements, tabName):
+        T24FieldCtrl.__init__(self, page, aaProperty, fieldName, elements[0])
         self.elements = elements
         self.tabName = tabName
 
     @staticmethod
-    def get_locator(fieldName, tabName):
-        return "css=input[name='radio:" + tabName + ":" + fieldName + "']"
+    def get_locator(aaProperty, fieldName, tabName):
+        return "css=" + T24FieldCtrl._get_aa_property_locator_parent(aaProperty) + "input[name='radio:" + tabName + ":" + fieldName + "']"
 
     def set_control_text(self, fieldText):
         self.page.log("Choosing a value via a radio button...", "DEBUG", False)
@@ -1196,7 +1263,7 @@ class T24RadioFieldCtrl(T24FieldCtrl):
 
     def _get_radio_button_text(self, radioInputValue):
         try:
-            locator = "css=input[name='radio:" + self.tabName + ":" + self.fieldName + "'][value='" + radioInputValue + "'] + span"
+            locator = "css=" + T24FieldCtrl._get_aa_property_locator_parent(self.aaProperty) + "input[name='radio:" + self.tabName + ":" + self.fieldName + "'][value='" + radioInputValue + "'] + span"
             elem = self.page.find_element(locator)
             return elem.get_attribute("innerText")
         except:
