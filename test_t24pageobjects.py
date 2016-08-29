@@ -211,6 +211,64 @@ class T24WebDriverTestCase(unittest.TestCase):
 
         self.homePage.sign_off()
 
+    def test_aa(self):
+        self.homePage.run_t24_menu_command("Product Catalog")
+
+        filters = ["Category EQ Deposits", "Group EQ Bonds"]    #NOTE: First constraint is needed to expand the enq row
+        enqResultPage = self.homePage.open_t24_enquiry("AA.PRODUCT.CATALOG-PRODUCT.GROUPS", filters)
+        is_success, error_message = enqResultPage.execute_enquiry_action(filters, "Products")
+        assert (is_success)
+
+        filters = ["Description EQ Fixed Term 6M - Bond"]
+        enqResultPage = self.homePage.open_t24_enquiry("AA.PRODUCT.CATALOG-PRODUCTS", filters)
+        is_success, error_message = enqResultPage.execute_enquiry_action(filters, "New Arrangement")
+        assert (is_success)
+
+        inputPage = self.homePage.open_input_page_new_record("AA.ARRANGEMENT.ACTIVITY,AA.NEW")
+
+        inputPage.set_T24_field_value("CUSTOMER", "129330")
+        inputPage.set_T24_field_value("CURRENCY", "USD")
+
+        inputPage.set_T24_field_value("[Commitment]AMOUNT", "500")
+
+        inputPage.set_T24_field_value("[Settlement Instructions]PAYIN.ACCOUNT:1:1", "71811")
+        inputPage.set_T24_field_value("[Settlement Instructions]PAYIN.ACTIVITY:1:1", "LENDING-ADJUST.BALANCE-BALANCE.MAINTENANCE")
+        # note - we ave tab here
+        inputPage.set_T24_field_value("[Settlement Instructions]PAYOUT.ACCOUNT:1", "58904")
+
+        inputPage.click_commit_button()
+
+        inputPage.receive_documents()
+
+        inputPage.click_accept_overrides()
+
+        new_id = inputPage.get_id_from_completed_transaction()
+        #print "ID of created CUSTOMER record is " + new_id
+        #inputPage.close_window()
+
+         # authorize the account
+        self.homePage.sign_off()
+        self.loginpage.enter_T24_credentials("AUTHOR", "123456")
+        authorPage = self.homePage.open_authorize_page("AA.ARRANGEMENT.ACTIVITY", new_id)
+        authorPage.click_authorize_button()
+        authorizedAccountId = inputPage.get_id_from_completed_transaction()
+        assert(new_id == authorizedAccountId)
+        self.homePage.sign_off()
+
+        # see
+        # self.loginpage.enter_T24_credentials("INPUTT", "123456")
+        seePage = self.homePage.open_see_page("AA.ARRANGEMENT.ACTIVITY", "AAACT141129KB9V712")#new_id)
+        print seePage.get_T24_field_value("CUSTOMER")   #129330
+        print seePage.get_T24_field_value("PRODUCT")    #BONDS.A.6M
+        print seePage.get_T24_field_value("[Commitment]AMOUNT")
+
+        # TODO - Cannot locate the ones below, the layout is differet than supported
+        # print seePage.get_T24_field_value("[Settlement Instructions]PAYIN.ACCOUNT:1:1")
+        # print seePage.get_T24_field_value("[Settlement Instructions]PAYIN.ACTIVITY:1:1")
+        # print seePage.get_T24_field_value("[Settlement Instructions]PAYOUT.ACCOUNT:1")
+
+        self.homePage.sign_off()   # sometimes this blows up
+
 #    def tearDown(self):
 #        self.loginpage.close()
 
