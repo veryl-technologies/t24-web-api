@@ -592,7 +592,7 @@ class T24HomePage(T24Page):
 
         self._find_or_open_app_window(version, "S", record_id)
 
-        self._set_current_page(T24RecordSeePage())
+        self._set_current_page(T24RecordSeePage(version, record_id))
         return self._get_current_page()
 
 
@@ -810,6 +810,16 @@ class T24EnquiryResultPage(T24Page):
 
 
 class T24TransactionPage(T24Page):
+
+    version = None
+    transaction_id = None
+
+    def __init__(self, version = None, transaction_id = None):
+        T24Page.__init__(self)
+
+        self.version = version
+        self.transaction_id = transaction_id
+
     def get_transaction_id(self):
         try:
             return self.get_text("xpath=.//span[contains(@class, 'iddisplay')]")
@@ -838,6 +848,23 @@ class T24TransactionPage(T24Page):
             return False
 
 
+    def _is_AA(self):
+        return self.version is not None and (self.version == "AA.ARRANGEMENT.ACTIVITY" or self.version.startswith("AA.ARRANGEMENT.ACTIVITY,"))
+
+    def _split_AA_property_name(self, field_name):
+        try:
+            if self._is_AA():
+                start_idx = field_name.index("[")
+                if start_idx == 0:
+                    end_idx = field_name.index("]")
+                    if end_idx > 1 and end_idx < (len(field_name) - 1):
+                        return field_name[start_idx + 1 : end_idx], field_name[end_idx + 1:]
+        except:
+            pass
+
+        return None, field_name
+
+
 class T24RecordSeePage(T24TransactionPage):
     """ Models the T24 Record See Page"""
 
@@ -846,6 +873,9 @@ class T24RecordSeePage(T24TransactionPage):
 
     # Probably not necessary
     uri = "/BrowserWeb/servlet/BrowserServlet#1"
+
+    def __init__(self, version = None, transaction_id = None):
+        T24TransactionPage.__init__(self, version, transaction_id)
 
     # Gets a text value from the underlying T24 field name
     @robot_alias("get_T24_field_value")
@@ -858,6 +888,8 @@ class T24RecordSeePage(T24TransactionPage):
         return fieldValue
 
     def _get_T24_field_value_among_many(self, fieldName):
+        aaProperty, fieldName = self._split_AA_property_name(fieldName)
+
         parts = fieldName.rpartition(':')  # we expect AAA:1, AAA:2 for multivalues or just AAA for normal fields
         if parts[1] == ':':
             mainFieldName = parts[0]
@@ -866,10 +898,7 @@ class T24RecordSeePage(T24TransactionPage):
             mainFieldName = fieldName
             indexPart = ''
 
-        if Config.get_t24_version() >= 14:
-            locator = "xpath=.//*[@id='fieldCaption:" + mainFieldName + "']/../../..//*[3]//*"
-        else:
-            locator = "xpath=.//*[@id='fieldCaption:" + mainFieldName + "']/../..//*[3]//*"
+        locator = self._get_get_T24_field_value_locator(aaProperty, mainFieldName)
 
         isSimpleField = not indexPart.isdigit()  # simple fields should have a single element matched in the HTML
         elements = self._element_find(locator, isSimpleField, True)
@@ -884,6 +913,18 @@ class T24RecordSeePage(T24TransactionPage):
                 return elements[index].text
             else:
                 raise ValueError("Could not find element at index " + indexPart + " for field '" + mainFieldName + "'.")
+
+    def _get_get_T24_field_value_locator(self, aaProperty, mainFieldName):
+        is_ver_14_or_above = True   # Config.get_t24_version() >= 14
+
+        locator_parent = ""
+        if aaProperty is not None and len(aaProperty) > 0:
+            locator_parent = "fieldset/a[@name='legend_" + aaProperty + "']/../div//"
+
+        if is_ver_14_or_above:
+            return "xpath=.//" + locator_parent + "*[@id='fieldCaption:" + mainFieldName + "']/../../..//*[3]//*"
+        else:
+            return "xpath=.//" + locator_parent + "*[@id='fieldCaption:" + mainFieldName + "']/../..//*[3]//*"
 
 class T24RecordInputPage(T24TransactionPage):
     """ Models the T24 Record Input Page"""
@@ -902,17 +943,10 @@ class T24RecordInputPage(T24TransactionPage):
 
     currentTabName = ''
 
-    version = None
-
-    transaction_id = None
-
     _last_selected_property = None
 
     def __init__(self, version = None, transaction_id = None):
-        T24TransactionPage.__init__(self)
-
-        self.version = version
-        self.transaction_id = transaction_id
+        T24TransactionPage.__init__(self, version, transaction_id)
 
     # Checks whether the transaction is completed and if yes, extracts the referenced ID
     @robot_alias("get_id_from_completed_transaction")
@@ -942,14 +976,8 @@ class T24RecordInputPage(T24TransactionPage):
     # Set a value in a text field, by specifying the underlying T24 field name
     @robot_alias("set_T24_field_value")
     def set_T24_field_value(self, fieldName, fieldText):
-        aaProperty = None
-        if self._is_AA():
-            aaProperty, fieldName = self._split_AA_property_name(fieldName)
-            if aaProperty is not None and self._last_selected_property != aaProperty:
-                propertyLine = self.find_element("xpath=.//a[@href='#legend_" + aaProperty + "']", False, 0)
-                propertyLine.click()
-
-        self._last_selected_property = aaProperty
+        aaProperty, fieldName = self._split_AA_property_name(fieldName)
+        self._select_AA_property_if_valid(aaProperty)
 
         fieldCtrl = self._get_field_ctrl(aaProperty, fieldName)
         if not fieldCtrl:
@@ -972,20 +1000,14 @@ class T24RecordInputPage(T24TransactionPage):
 
         return self
 
-    def _is_AA(self):
-        return self.version is not None and (self.version == "AA.ARRANGEMENT.ACTIVITY" or self.version.startswith("AA.ARRANGEMENT.ACTIVITY,"))
+    def _select_AA_property_if_valid(self, aaProperty):
+        if aaProperty is not None and self._last_selected_property != aaProperty:
+            if self._last_selected_property is None:
+                self.click_validate_button()    # do validate before we start input properties
+            propertyLine = self.find_element("xpath=.//a[@href='#legend_" + aaProperty + "']", False, 0)
+            propertyLine.click()
 
-    def _split_AA_property_name(self, field_name):
-        try:
-            start_idx = field_name.index("[")
-            if start_idx == 0:
-                end_idx = field_name.index("]")
-                if end_idx > 1 and end_idx < (len(field_name) - 1):
-                    return field_name[start_idx + 1 : end_idx], field_name[end_idx + 1:]
-        except:
-            pass
-
-        return None, field_name
+        self._last_selected_property = aaProperty
 
     def _get_field_ctrl(self, aaProperty, fieldName):
         waitTimeBetweenRetries = 1
