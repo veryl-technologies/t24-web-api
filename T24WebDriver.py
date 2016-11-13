@@ -60,14 +60,11 @@ class T24WebDriver:
         self.login_page = None  # After a successful login, the login page gets actually closed, so don't store it
 
     def _make_sure_is_logged_in(self, user_type=None):
-        if not self._is_logged_in:
+        if not self.login_user_type:
             self.t24_login(user_type or "INPUTTER")
         elif user_type and self.login_user_type != user_type:
             self._log_debug('The current user ' + self.login_user_type + ' needs to be changed with ' + user_type)
             self.t24_login(user_type)
-
-    def _is_logged_in(self):
-        return self.login_user_type
 
     def t24_logoff(self):
         """
