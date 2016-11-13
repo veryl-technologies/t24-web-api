@@ -31,6 +31,10 @@ class T24WebDriver:
         The default user type is INPUTTER
         """
 
+        if self.login_user_type == user_type:
+            self._log_info('Already logged in as ' + user_type)
+            return
+
         self._log_info('Trying to login as ' + user_type)
 
         var_user_name = "${LOGIN_" + user_type + "}"
@@ -43,9 +47,7 @@ class T24WebDriver:
         if not password:
             BuiltIn().fail("Please specify a password in a variable " + var_pass)
 
-        # TODO disable Capture Screenshot as it currently doesn't work
-        se2lib = BuiltIn().get_library_instance('Selenium2Library')
-        se2lib.register_keyword_to_run_on_failure = None
+        self.t24_logoff()
 
         if not self.login_page:
             self.login_page = T24LoginPage()
@@ -53,23 +55,26 @@ class T24WebDriver:
             # For demos, sometimes it is nice to to start in maximized mode. Uncomment line below when necessary:
             # self.login_page.maximize_browser_window()
 
-        self.login_user_type = user_type
         self.home_page = self.login_page.enter_T24_credentials(user, password)
+        self.login_user_type = user_type
+        self.login_page = None  # After a successful login, the login page gets actually closed, so don't store it
 
     def _make_sure_is_logged_in(self, user_type=None):
-        if not self.login_page:
+        if not self._is_logged_in:
             self.t24_login(user_type or "INPUTTER")
         elif user_type and self.login_user_type != user_type:
             self._log_debug('The current user ' + self.login_user_type + ' needs to be changed with ' + user_type)
-            self.t24_logoff()
             self.t24_login(user_type)
+
+    def _is_logged_in(self):
+        return self.login_user_type
 
     def t24_logoff(self):
         """
         If there is a currently logged-in user in T24, clicks the 'Sign Off' button and reopens the T24 login page
         """
         if self.home_page:
-            self.home_page.sign_off()
+            self.login_page = self.home_page.sign_off()
             self.home_page = None
 
     def execute_t24_menu_command(self, menu_items):
@@ -352,7 +357,12 @@ class T24WebDriver:
         """
         Closes all browser windows (usually at the end of a test case)
         """
-        if self.login_page:
+        self.login_user_type = None
+
+        if self.home_page:
+            self.home_page.close_all_browsers()
+            self.home_page = None
+        elif self.login_page:
             self.login_page.close_all_browsers()
             self.login_page = None
 
