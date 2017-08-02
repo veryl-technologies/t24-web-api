@@ -12,6 +12,7 @@ Scenario: Create and verify a coprorate customer
     ...    LANGUAGE=1    STREET:1=LAKESHORE STREET    SECTOR=2001
     Create Or Amend T24 Record    CUSTOMER    \    ${testDataFields}    Accept All    ${EMPTY}
     Authorize T24 Record    CUSTOMER    ${TX_ID}    0
+    T24 Login    INPUTTER
     @{validationRules}=    Create List    STREET :EQ:= LAKESHORE STREET
     Check T24 Record    CUSTOMER    ${TX_ID}    ${validationRules}
 
@@ -22,6 +23,7 @@ Scenario: Create and verify an account
     @{testDataFields}=    Create List    CUSTOMER=ABCL    CATEGORY=1002    CURRENCY=EUR
     Create Or Amend T24 Record    ACCOUNT    >> MY_VAR    ${testDataFields}    Accept All    Expect Any Error
     Authorize T24 Record    ACCOUNT    ${TX_ID}    0
+    T24 Login    INPUTTER
     @{validationRules}=    Create List    CATEGORY :EQ:= 1-002    CURRENCY :EQ:= EUR    ACCOUNT.OFFICER :EQ:= 1
     Check T24 Record    ACCOUNT    ${TX_ID}    ${validationRules}
     @{testDataFields}=    Create List    CUSTOMER=${MY_VAR}    CATEGORY=1002    CURRENCY=EUR
@@ -41,15 +43,19 @@ Demo
     ...    RESIDENCE=US    LANGUAGE=1    SECTOR=1001
     Create Or Amend T24 Record    CUSTOMER    >>CUST1    ${testDataFields}    \    ${EMPTY}
     Authorize T24 Record    CUSTOMER    ${CUST1}
+    T24 Login    INPUTTER
     @{testDataFields}=    Create List    CUSTOMER=${CUST1}    CATEGORY=1002    CURRENCY=USD
     Create Or Amend T24 Record    ACCOUNT    >>AC1    ${testDataFields}    \    ${EMPTY}
     Authorize T24 Record    ACCOUNT    ${AC1}
+    T24 Login    INPUTTER
     @{testDataFields}=    Create List    CUSTOMER=${CUST1}    CATEGORY=1002    CURRENCY=EUR
     Create Or Amend T24 Record    ACCOUNT    >>AC2    ${testDataFields}    \    ${EMPTY}
     Authorize T24 Record    ACCOUNT    ${AC2}
+    T24 Login    INPUTTER
     @{testDataFields}=    Create List    TRANSACTION.TYPE=AC    DEBIT.ACCT.NO=${AC1}    DEBIT.CURRENCY=USD    CREDIT.ACCT.NO=${AC2}    DEBIT.AMOUNT=10
     Create Or Amend T24 Record    FUNDS.TRANSFER    >>FT1    ${testDataFields}    Accept All    ${EMPTY}
     Authorize T24 Record    FUNDS.TRANSFER    ${FT1}
+    T24 Login    INPUTTER
     @{validationRules}=    Create List    WORKING.BALANCE :EQ:= 6.71
     Check T24 Record    ACCOUNT    ${AC2}    ${validationRules}
 
