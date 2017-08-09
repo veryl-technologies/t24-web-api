@@ -646,8 +646,10 @@ class T24EnquiryStartPage(T24Page):
 
             indexes = id[id.index(":"):]
 
-            element_op = self.find_element("xpath=//select[@name='operand" + indexes + "']/option[@value='" + oper + "']")
-            element_op.click()
+            if not self.find_elements("xpath=//input[@type='hidden' and @name='operand" + indexes + "' and @value='" + oper + "']", False, 0):
+                element_ops = self.find_elements("xpath=//select[@name='operand" + indexes + "']/option[@value='" + oper + "']", False, 0)
+                if element_ops:
+                    element_ops[0].click()
 
             element_val = self.find_element("xpath=//input[@type='text' and @id='value" + indexes + "']")
             element_val.send_keys(value)
