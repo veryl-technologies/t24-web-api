@@ -300,12 +300,11 @@ class T24HomePage(T24Page):
         if enquiry_filters:
             T24EnquiryStartPage().run_enquiry(enquiry_filters)
 
-    def _find_tab(self, item):
-        xpath = "xpath=.//a[contains(@class,'active-tab')]/span[text()='" + item + "']"  # class can be: "active-tab" or "nonactive-tab"
+    def _find_tab(self, tab_label):
+        xpath = "xpath=.//a[contains(@class,'active-tab')]/span[text()='" + tab_label + "']"  # handles both "active-tab" or "nonactive-tab"
 
         if self._find_and_select_suitable_opened_window(None, "TAB", xpath):
-            element = self.find_element(xpath, False, 0)
-            return element
+            return self.find_element(xpath, False, 0)
 
         return None
 
@@ -330,14 +329,27 @@ class T24HomePage(T24Page):
             windowNames = self.get_window_names()
 
             while len(windowNames) > 1:  # while there are other windows apart from the main
-                self.select_window(windowNames[len(windowNames) - 1])
+                window_name = windowNames[len(windowNames) - 1]
+                self.select_window(window_name)
+
                 frames = self._enumerate_all_frames()
-                if frames and len(frames):
+                has_frames = frames and len(frames)
+
+                frames_text = "with frames" if has_frames else "no frames"
+                self.log("Analyzing window '" + window_name + "' (" + frames_text + ")...", "DEBUG", False)
+
+                if command == "TAB" and self.find_elements(record_id, False, 0):
+                    return True
+
+                if has_frames:
                     for f in frames:
                         if isinstance(f, CosDivPane):
                             continue
 
                         self._select_cos_frame(f)
+
+                        self.log("Processing COS frame '" + f.get_type() + "'...", "DEBUG", False)
+
                         if command == "MENU" and f.get_type() == "menu":
                             if len(self.find_elements(record_id, False, 0)) > 0:
                                 return True
@@ -487,7 +499,7 @@ class T24HomePage(T24Page):
                 raise exceptions.NoSuchElementException("Unable to find tab '" + item + "'")
 
             element = element.find_element_by_xpath("..")  # we need parent 'a' element
-            if element.get_attribute("class") != "active-tab":  # eles"nonactive-tab"
+            if element.get_attribute("class") != "active-tab":  # else "nonactive-tab"
                 element.click()
 
         self._take_page_screenshot("VERBOSE")
