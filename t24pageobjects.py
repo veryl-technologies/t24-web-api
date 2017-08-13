@@ -330,21 +330,24 @@ class T24HomePage(T24Page):
 
             while len(windowNames) > 1:  # while there are other windows apart from the main
                 window_name = windowNames[len(windowNames) - 1]
+                self.log("Analyzing if '" + window_name + " is suitable for " + command + " command ...", "INFO", False)
+
                 self.select_window(window_name)
-
-                frames = self._enumerate_all_frames()
-                has_frames = frames and len(frames)
-
-                frames_text = str(len(frames)) + " frames" if has_frames else "no frames"
-                self.log("Analyzing if '" + window_name + "' (" + frames_text + ") is suitable for " + command + " command ...", "INFO", False)
 
                 if command == "TAB" and self.find_elements(record_id, False, 0):
                     return True
 
+                frames = self._enumerate_all_frames()
+                has_frames = frames and len(frames)
+
                 if has_frames:
+                    self.log("Analyzing " + str(len(frames)) + " frames ...", "INFO", False)
+
                     for f in frames:
                         if isinstance(f, CosDivPane):
                             continue
+
+                        self.log("Analyzing if '" + f.name + " is suitable for " + command + " command ...", "INFO", False)
 
                         self._select_cos_frame(f)
 
