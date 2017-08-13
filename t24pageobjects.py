@@ -335,8 +335,8 @@ class T24HomePage(T24Page):
                 frames = self._enumerate_all_frames()
                 has_frames = frames and len(frames)
 
-                frames_text = "with " + str(len(frames)) + " frames" if has_frames else "no frames"
-                self.log("Analyzing window '" + window_name + "' (" + frames_text + ")...", "DEBUG", False)
+                frames_text = str(len(frames)) + " frames" if has_frames else "no frames"
+                self.log("Analyzing if '" + window_name + "' (" + frames_text + ") is suitable for " + command + " command ...", "INFO", False)
 
                 if command == "TAB" and self.find_elements(record_id, False, 0):
                     return True
