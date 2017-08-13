@@ -335,7 +335,7 @@ class T24HomePage(T24Page):
                 frames = self._enumerate_all_frames()
                 has_frames = frames and len(frames)
 
-                frames_text = "with frames" if has_frames else "no frames"
+                frames_text = "with " + str(len(frames)) + " frames" if has_frames else "no frames"
                 self.log("Analyzing window '" + window_name + "' (" + frames_text + ")...", "DEBUG", False)
 
                 if command == "TAB" and self.find_elements(record_id, False, 0):
@@ -369,7 +369,7 @@ class T24HomePage(T24Page):
             return False
 
         except:
-            e = sys.exc_info()[0]
+            e = sys.exc_info()[1]
             self.log("Error finding suitable window: " + str(e), "WARN")
             return False
 
@@ -1135,7 +1135,7 @@ class T24RecordInputPage(T24TransactionPage):
             else:
                 self.log(err, "WARN", False)
         except:
-            e = sys.exc_info()[0]
+            e = sys.exc_info()[1]
             self.log(str(e), "WARN", False)
             pass
 
