@@ -105,13 +105,20 @@ class T24Page(Page):
 
         raise NotImplementedError("'_evaluate_comparison' is not implemented of operator: '" + oper + "'")
 
-    def _enumerate_all_frames(self):
+    def _enumerate_all_frames(self, frame_name_hint=None):
         frames = []
         self._enumerate_frames_recursively(frames, [], [])
 
-        # another performance optimization - we don't need frames that contain children
-        res = [f for f in frames if (len(f.children) == 0)]
-        return res
+        # performance optimization - we don't need frames that contain children
+        frames = [f for f in frames if (len(f.children) == 0)]
+
+        if frame_name_hint:
+            # performance optimization - it's more likely to find the item in main frames
+            main_frames = [f for f in frames if frame_name_hint in f.name]
+            other_frames = [f for f in frames if frame_name_hint not in f.name]
+            frames = main_frames + other_frames
+
+        return frames
 
     def _enumerate_frames_recursively(self, all_frames_found, parent_frames, currently_selected_frames):
         frame_elements = self.find_elements("xpath=.//frame", False, 0)
@@ -337,10 +344,15 @@ class T24HomePage(T24Page):
                 if command == "TAB" and self.find_elements(record_id, False, 0):
                     return True
 
-                frames = self._enumerate_all_frames()
-                has_frames = frames and len(frames)
+                frame_name_hint = None
+                if command == "TAB":
+                    frame_name_hint = "main"
+                elif command == "ENQ":
+                    frame_name_hint = "workarea"
 
-                if has_frames:
+                frames = self._enumerate_all_frames(frame_name_hint)
+
+                if frames:
                     self.log("Analyzing " + str(len(frames)) + " frames ...", "INFO", False)
 
                     for f in frames:
