@@ -1185,6 +1185,17 @@ class T24RecordInputPage(T24TransactionPage):
 
         return self
 
+    def get_fields_with_errors_no_wait(self):
+        fields = []
+        for span in self.find_elements("xpath=.//*[@id='errors']/tbody/*/*/a/span", False, 0):
+            fields.append(str(span.text))
+
+        if fields:
+            self.log("Fields with errors:" + str(fields), "INFO", True)
+
+        return fields
+	
+
     # Clicks the Authorize Button When Dealing with T24 Transactions
     def click_authorize_button(self):
         self.click_element(self._get_authorize_locator())

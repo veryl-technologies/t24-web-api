@@ -346,9 +346,43 @@ class T24WebDriver:
     def _is_match_LK(self, value, pattern):
         return fnmatch.fnmatchcase(value, pattern.replace("...", "*"))
 
-    def validate_t24_record(self):
+    def validate_t24_record(self, app_version, record_id, record_field_values, overrides_handling=None, error_handling=None):
+        """
+        Validates if a T24 record with the specified fields can be created or amended
+        """
         self._make_sure_is_logged_in()
-        raise NotImplementedError('TODO validate_t24_record')
+
+        if record_id and not record_id.startswith(">>"):
+            input_page = self.home_page.open_edit_page(app_version, record_id)
+        else:
+            input_page = self.home_page.open_input_page_new_record(app_version)
+
+        for field_and_value in record_field_values:
+            pair = field_and_value.split("=")
+            input_page.set_T24_field_value(pair[0], pair[1])
+
+        input_page.click_validate_button()
+        self._validate_errors(input_page, error_handling)
+
+        input_page.close_window()
+        self._make_home_page_default()
+
+    def _validate_errors(self, input_page, error_handling):
+        problematic_fields = input_page.get_fields_with_errors_no_wait()
+
+        if error_handling == "Fail" or not error_handling:
+            if problematic_fields:
+                BuiltIn().fail("Unexpected errors in fields: " + ", ".join(problematic_fields))
+        else:
+            if not problematic_fields:
+                BuiltIn().fail("Expected errors, but encountered none")
+            else:
+                if error_handling.startswith("Expect Error Containing:"):
+                    field = error_handling.replace("Expect Error Containing:", "", 1)
+                    if not field in problematic_fields:
+                        BuiltIn().fail("Expected error in field " + field + ", but got errors in " + ", ".join(problematic_fields))
+                    else:
+                        BuiltIn().log("The error in field " + field + " is expected")
 
     def close_browsers(self):
         """
