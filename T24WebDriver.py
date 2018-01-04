@@ -113,19 +113,20 @@ class T24WebDriver:
 
         input_page.click_commit_button()
 
-        if overrides_handling != "Fail" and not input_page.is_txn_complete_displayed_no_wait():
-            if input_page.is_receive_documents_pending_no_wait():
-                input_page.receive_documents()
-            if input_page.is_accept_overrides_displayed_no_wait():
-                input_page.click_accept_overrides()
-            if not input_page.is_txn_complete_displayed_no_wait():
-                input_page.click_commit_button()
+        if not self._validate_errors(input_page, error_handling):
+            if overrides_handling != "Fail" and not input_page.is_txn_complete_displayed_no_wait():
+                if input_page.is_receive_documents_pending_no_wait():
+                    input_page.receive_documents()
+                if input_page.is_accept_overrides_displayed_no_wait():
+                    input_page.click_accept_overrides()
+                if not input_page.is_txn_complete_displayed_no_wait():
+                    input_page.click_commit_button()
 
-        self.last_input_id = input_page.get_id_from_completed_transaction()
-        self.last_tx_id = self.last_input_id
-        BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
-        if record_id.startswith(">>"):
-            self._set_variable(record_id[2:].strip(), self.last_tx_id)
+            self.last_input_id = input_page.get_id_from_completed_transaction()
+            self.last_tx_id = self.last_input_id
+            BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
+            if record_id.startswith(">>"):
+                self._set_variable(record_id[2:].strip(), self.last_tx_id)
 
         input_page.close_window()
         self._make_home_page_default()
@@ -383,6 +384,8 @@ class T24WebDriver:
                         BuiltIn().fail("Expected error in field " + field + ", but got errors in " + ", ".join(problematic_fields))
                     else:
                         BuiltIn().log("The error in field " + field + " is expected")
+
+        return problematic_fields
 
     def close_browsers(self):
         """
