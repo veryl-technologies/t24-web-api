@@ -1112,9 +1112,9 @@ class T24RecordInputPage(T24TransactionPage):
         return self
 
     def click_validate_button(self):
-        self._take_page_screenshot("VERBOSE")
         self.wait_until_page_contains_element(self._get_validate_locator(), 3)
         self.click_element(self._get_validate_locator())
+        self._take_page_screenshot("VERBOSE")
         return self
 
     def is_accept_overrides_displayed_no_wait(self):
@@ -1184,6 +1184,17 @@ class T24RecordInputPage(T24TransactionPage):
             pass
 
         return self
+
+    def get_fields_with_errors_no_wait(self):
+        fields = []
+        for span in self.find_elements("xpath=.//*[@id='errors']/tbody/*/*/a/span", False, 0):
+            fields.append(str(span.text))
+
+        if fields:
+            self.log("Fields with errors:" + str(fields), "INFO", True)
+
+        return fields
+	
 
     # Clicks the Authorize Button When Dealing with T24 Transactions
     def click_authorize_button(self):
