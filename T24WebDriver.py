@@ -381,9 +381,11 @@ class T24WebDriver:
                 if error_handling.startswith("Expect Error Containing:"):
                     field = error_handling.replace("Expect Error Containing:", "", 1)
                     if not field in problematic_fields:
-                        BuiltIn().fail("Expected error in field " + field + ", but got errors in " + ", ".join(problematic_fields))
+                        BuiltIn().fail("Expected error in field '" + field + "', but instead got errors in " + ", ".join(problematic_fields))
                     else:
-                        BuiltIn().log("The error in field " + field + " is expected")
+                        BuiltIn().log("The encountered error in field '" + field + "' was expected")
+                else: # expect any error
+                    BuiltIn().log("The encountered error was expected")
 
         return problematic_fields
 
