@@ -378,8 +378,8 @@ class T24WebDriver:
             if not problematic_fields:
                 BuiltIn().fail("Expected errors, but encountered none")
             else:
-                if error_handling.startswith("Expect Error Containing:"):
-                    field = error_handling.replace("Expect Error Containing:", "", 1)
+                if error_handling.startswith("Expect Error for Field:"):
+                    field = error_handling.replace("Expect Error for Field:", "", 1)
                     if not field in problematic_fields:
                         BuiltIn().fail("Expected error in field '" + field + "', but instead got errors in " + ", ".join(problematic_fields))
                     else:
