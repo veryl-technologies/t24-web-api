@@ -113,23 +113,24 @@ class T24WebDriver:
 
         input_page.click_commit_button()
 
-        if not self._validate_errors(input_page, error_handling):
-            if overrides_handling != "Fail" and not input_page.is_txn_complete_displayed_no_wait():
-                if input_page.is_receive_documents_pending_no_wait():
-                    input_page.receive_documents()
-                if input_page.is_accept_overrides_displayed_no_wait():
-                    input_page.click_accept_overrides()
-                if not input_page.is_txn_complete_displayed_no_wait():
-                    input_page.click_commit_button()
+        try:
+            if not self._validate_errors(input_page, error_handling):
+                if overrides_handling != "Fail" and not input_page.is_txn_complete_displayed_no_wait():
+                    if input_page.is_receive_documents_pending_no_wait():
+                        input_page.receive_documents()
+                    if input_page.is_accept_overrides_displayed_no_wait():
+                        input_page.click_accept_overrides()
+                    if not input_page.is_txn_complete_displayed_no_wait():
+                        input_page.click_commit_button()
 
-            self.last_input_id = input_page.get_id_from_completed_transaction()
-            self.last_tx_id = self.last_input_id
-            BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
-            if record_id.startswith(">>"):
-                self._set_variable(record_id[2:].strip(), self.last_tx_id)
-
-        input_page.close_window()
-        self._make_home_page_default()
+                self.last_input_id = input_page.get_id_from_completed_transaction()
+                self.last_tx_id = self.last_input_id
+                BuiltIn().set_test_variable("${TX_ID}", self.last_tx_id)
+                if record_id.startswith(">>"):
+                    self._set_variable(record_id[2:].strip(), self.last_tx_id)
+        finally:
+            input_page.close_window()
+            self._make_home_page_default()
 
     def _set_variable(self, name, value):
         if name.lower().startswith("g_") or name.lower().startswith("global_"):
@@ -358,15 +359,16 @@ class T24WebDriver:
         else:
             input_page = self.home_page.open_input_page_new_record(app_version)
 
-        for field_and_value in record_field_values:
-            pair = field_and_value.split("=")
-            input_page.set_T24_field_value(pair[0], pair[1])
+        try:
+            for field_and_value in record_field_values:
+                pair = field_and_value.split("=")
+                input_page.set_T24_field_value(pair[0], pair[1])
 
-        input_page.click_validate_button()
-        self._validate_errors(input_page, error_handling)
-
-        input_page.close_window()
-        self._make_home_page_default()
+            input_page.click_validate_button()
+            self._validate_errors(input_page, error_handling)
+        finally:
+            input_page.close_window()
+            self._make_home_page_default()
 
     def _validate_errors(self, input_page, error_handling):
         problematic_fields = input_page.get_fields_with_errors_no_wait()
