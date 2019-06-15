@@ -1,4 +1,4 @@
-# Veryyl Temenos T24 Web Driver
+# Veryl Temenos T24 Web Driver
 Temenos T24 Web Driver, based on the Robot Framework 
 
 # Requirements
