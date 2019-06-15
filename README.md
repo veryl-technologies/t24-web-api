@@ -6,5 +6,5 @@ Temenos T24 Web Driver, based on the Robot Framework
 * Mozilla Firefox 45 ESR release - that's currently the only compatible Firefox release.
 
 # Related
-See sample tests at https://github.com/veryl-technologies/t24-tests-library
-See IDE https://github.com/veryl-technologies/t24-tests-ide
+* See sample tests at https://github.com/veryl-technologies/t24-tests-library
+* See IDE https://github.com/veryl-technologies/t24-tests-ide
